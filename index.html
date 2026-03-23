@@ -1262,11 +1262,11 @@
 
 <script>
 // ============================================================
-// CONFIG
+// CONFIG — action names match Code.gs exactly
 // ============================================================
 const API_URL = 'https://script.google.com/macros/s/AKfycbwe6vuvTNSC5TL_pW4Vhu8L4p7y8qNKmzsITiNJPBS4XKNZL5zg-Js2FEM0lU9jGWynZA/exec';
 
-let SESSION = { user: null, token: null };
+let SESSION = { user: null };
 let APP_DATA = { workers: [], permits: [], contractors: [], users: [] };
 let selectedWorkers = [];
 let capturedPhotoBase64 = null;
@@ -1300,16 +1300,15 @@ function toast(msg, type = 'success') {
 }
 
 // ============================================================
-// API CALL
+// API CALL — sends exactly what Code.gs expects
+// action = top-level key, rest of keys spread at top level
 // ============================================================
-async function api(action, payload = {}) {
+async function api(action, body = {}) {
   try {
-    const body = { action, payload };
-    if (SESSION.token) body.auth = { user_id: SESSION.user?.User_ID, token: SESSION.token };
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({ action, ...body })
     });
     const data = await res.json();
     return data;
@@ -1319,7 +1318,7 @@ async function api(action, payload = {}) {
 }
 
 // ============================================================
-// LOGIN
+// LOGIN  — backend expects { action, userId, password }
 // ============================================================
 async function handleLogin() {
   const userId = document.getElementById('login-userid').value.trim();
@@ -1336,29 +1335,27 @@ async function handleLogin() {
   btn.innerHTML = '<div class="spinner"></div> Signing in...';
   errEl.style.display = 'none';
 
-  const res = await api('login', { user_id: userId, password });
+  // Matches: authenticateUser(params.userId, params.password)
+  const res = await api('login', { userId, password });
 
   btn.disabled = false;
   btn.textContent = 'Sign In';
 
   if (res.success) {
-    SESSION.user = res.user;
-    SESSION.token = res.token;
-    if (res.require_password_change) {
+    SESSION.user = {
+      User_ID: res.userData?.userId || userId,
+      Full_Name: res.userData?.name || userId,
+      Role: res.userData?.role || 'User',
+      Email_Address: ''
+    };
+    if (res.requirePasswordChange) {
       document.getElementById('change-pwd-modal').classList.add('active');
     } else {
       launchApp();
     }
   } else {
-    // Demo fallback
-    if (userId === '33135' && password === 'Dhanuka#321') {
-      SESSION.user = { User_ID: '33135', Full_Name: 'Bhanu Pratap', Role: 'EHS Lead', Email_Address: 'bhanupratap@dhanuka.com' };
-      SESSION.token = 'demo-token-' + Date.now();
-      launchApp();
-    } else {
-      errEl.textContent = res.message || 'Invalid credentials.';
-      errEl.style.display = 'flex';
-    }
+    errEl.textContent = res.message || 'Invalid credentials.';
+    errEl.style.display = 'flex';
   }
 }
 
@@ -1381,14 +1378,15 @@ function checkPwdStrength(val) {
   fill.style.background = colors[strength - 1] || '#eee';
 }
 
+// Backend expects: { action:'updatePassword', userId, newPassword }
 async function submitChangePassword() {
   const newPwd = document.getElementById('new-pwd').value;
   const confirmPwd = document.getElementById('confirm-pwd').value;
   if (newPwd.length < 8) { toast('Password must be at least 8 characters.', 'error'); return; }
   if (newPwd !== confirmPwd) { toast('Passwords do not match.', 'error'); return; }
 
-  const res = await api('changePassword', { new_password: newPwd });
-  if (res.success || SESSION.token) {
+  const res = await api('updatePassword', { userId: SESSION.user.User_ID, newPassword: newPwd });
+  if (res.success) {
     document.getElementById('change-pwd-modal').classList.remove('active');
     launchApp();
     toast('Password changed successfully!');
@@ -1408,9 +1406,9 @@ function launchApp() {
   document.getElementById('sidebar-avatar').textContent = u.Full_Name ? u.Full_Name[0].toUpperCase() : '?';
   document.getElementById('sidebar-name').textContent = u.Full_Name || u.User_ID;
   document.getElementById('sidebar-role').textContent = u.Role || 'User';
-  document.getElementById('topbar-user').textContent = u.Email_Address || '';
+  document.getElementById('topbar-user').textContent = u.Full_Name || '';
 
-  // Show admin nav for EHS Lead
+  // Show admin nav for EHS Lead / Admin
   if (['EHS Lead', 'Admin'].includes(u.Role)) {
     document.getElementById('admin-nav').style.display = 'block';
   }
@@ -1419,7 +1417,7 @@ function launchApp() {
 }
 
 function handleLogout() {
-  SESSION = { user: null, token: null };
+  SESSION = { user: null };
   APP_DATA = { workers: [], permits: [], contractors: [], users: [] };
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-page').style.display = 'block';
@@ -1459,32 +1457,13 @@ function closeModal(id) {
 // DASHBOARD
 // ============================================================
 async function loadDashboardData() {
-  // Workers
-  const wRes = await api('getWorkers', {});
-  if (wRes.success && wRes.workers) {
-    APP_DATA.workers = wRes.workers;
-    document.getElementById('stat-workers').textContent = wRes.workers.length;
-    renderDashboardWorkers(wRes.workers.slice(0, 4));
-  } else {
-    document.getElementById('stat-workers').textContent = '1';
-    // Use local demo data
-    APP_DATA.workers = [{ Worker_Unique_ID: 'TXT01', Worker_Name: 'Test Worker', Contractor_Name: 'Test Contractor', Status: 'Active', Induction_Date: '2026-03-18' }];
-    renderDashboardWorkers(APP_DATA.workers);
-  }
-
-  // Permits
-  const pRes = await api('getPermits', {});
-  if (pRes.success && pRes.permits) {
-    APP_DATA.permits = pRes.permits;
-    document.getElementById('stat-permits').textContent = pRes.permits.filter(p => !['Approved','Rejected'].includes(p.Current_Status)).length;
-    document.getElementById('stat-pending').textContent = pRes.permits.filter(p => p.Current_Status?.includes('Pending')).length;
-    renderDashboardPermits(pRes.permits.slice(0, 4));
-  } else {
-    document.getElementById('stat-permits').textContent = '0';
-    document.getElementById('stat-pending').textContent = '0';
-  }
-
-  document.getElementById('stat-contractors').textContent = APP_DATA.contractors.length || '—';
+  // Backend has no read endpoints — show locally cached session data
+  document.getElementById('stat-workers').textContent = APP_DATA.workers.length || '0';
+  document.getElementById('stat-permits').textContent = APP_DATA.permits.filter(p => !['Approved','Rejected'].includes(p.Current_Status)).length || '0';
+  document.getElementById('stat-pending').textContent = APP_DATA.permits.filter(p => (p.Current_Status||'').includes('Pending')).length || '0';
+  document.getElementById('stat-contractors').textContent = APP_DATA.contractors.length || '0';
+  renderDashboardWorkers(APP_DATA.workers.slice(-4).reverse());
+  renderDashboardPermits(APP_DATA.permits.slice(-4).reverse());
 }
 
 function renderDashboardWorkers(workers) {
@@ -1539,12 +1518,8 @@ function getBadge(status) {
 async function loadWorkers() {
   const grid = document.getElementById('workers-grid');
   grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="spinner dark"></div></div>';
-
-  const res = await api('getWorkers', {});
-  if (res.success && res.workers) {
-    APP_DATA.workers = res.workers;
-  }
-  renderWorkers(APP_DATA.workers);
+  // Backend has no getWorkers endpoint — display locally cached workers
+  setTimeout(() => renderWorkers(APP_DATA.workers), 300);
 }
 
 function renderWorkers(workers) {
@@ -1715,15 +1690,42 @@ async function submitWorker() {
     photo_base64: capturedPhotoBase64 || null
   };
 
-  const res = await api('addWorker', payload);
+  // Backend expects: { action: 'induction', formData: {...} }
+  const res = await api('induction', { formData: {
+    name: payload.worker_name,
+    contractor: payload.contractor_name,
+    designation: payload.designation,
+    bloodGroup: payload.blood_group,
+    dob: payload.dob,
+    aadhar: payload.aadhar,
+    mobile: payload.mobile,
+    address: payload.address,
+    authorizations: payload.trainings,
+    photo: payload.photo_base64
+  }});
 
   btn.disabled = false;
   btn.textContent = 'Submit Induction';
 
   if (res.success) {
-    toast(`Worker inducted! ID: ${res.worker_id || 'Generated'}`, 'success');
+    const newId = res.newId || 'Generated';
+    toast(`Worker inducted! ID: ${newId}`, 'success');
+    // Cache locally so dashboard/list updates immediately
+    APP_DATA.workers.push({
+      Worker_Unique_ID: newId,
+      Worker_Name: payload.worker_name,
+      Contractor_Name: payload.contractor_name,
+      Designation: payload.designation,
+      Blood_Group: payload.blood_group,
+      Mobile_Number: payload.mobile,
+      Aadhar_Number: payload.aadhar,
+      Address: payload.address,
+      Authorizations: payload.trainings,
+      Photo_Drive_URL: '',
+      Status: 'Active',
+      Induction_Date: new Date().toISOString()
+    });
     clearInductionForm();
-    APP_DATA.workers = [];
   } else {
     toast(res.message || 'Induction failed. Check API.', 'error');
   }
@@ -1751,9 +1753,7 @@ function clearInductionForm() {
 // ============================================================
 async function loadPermits() {
   document.getElementById('permits-list').innerHTML = '<div class="empty-state"><div class="spinner dark"></div></div>';
-  const res = await api('getPermits', {});
-  if (res.success && res.permits) APP_DATA.permits = res.permits;
-  renderPermits(APP_DATA.permits);
+  setTimeout(() => renderPermits(APP_DATA.permits), 300);
 }
 
 function renderPermits(permits) {
@@ -1844,14 +1844,16 @@ async function doApprove(permitId, action) {
   const comments = action === 'query' ? prompt('Enter your query / comments:') : '';
   if (action === 'query' && !comments) return;
 
-  const res = await api('approvePermit', { permit_id: permitId, action, comments });
-  closeModal('permit-detail-modal');
-  if (res.success) {
-    toast(`Permit ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'queried'}!`);
-    loadPermits();
-  } else {
-    toast(res.message || 'Action failed. Check API.', 'error');
+  // Update local cache status immediately
+  const permit = APP_DATA.permits.find(p => p.Permit_ID === permitId);
+  if (permit) {
+    if (action === 'approve') permit.Current_Status = 'Approved';
+    else if (action === 'reject') permit.Current_Status = 'Rejected';
+    else if (action === 'query') permit.Current_Status = 'Queried';
   }
+  closeModal('permit-detail-modal');
+  toast(`Permit ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'queried'} locally. Add approvePermit to backend to persist.`, 'success');
+  loadPermits();
 }
 
 // ============================================================
@@ -1871,15 +1873,7 @@ function onPermitTypeChange() {
 }
 
 function loadWorkerSelect() {
-  const list = document.getElementById('worker-select-list');
-  if (!APP_DATA.workers.length) {
-    api('getWorkers', {}).then(res => {
-      if (res.success && res.workers) APP_DATA.workers = res.workers;
-      renderWorkerSelect(APP_DATA.workers);
-    });
-  } else {
-    renderWorkerSelect(APP_DATA.workers);
-  }
+  renderWorkerSelect(APP_DATA.workers);
 }
 
 function renderWorkerSelect(workers) {
@@ -1966,14 +1960,41 @@ async function submitPermit() {
     special_roles: JSON.stringify(specialRoles)
   };
 
-  const res = await api('createPermit', payload);
+  // Backend expects: { action: 'initiatePermit', permitData: {...} }
+  const res = await api('initiatePermit', { permitData: {
+    type: payload.permit_type,
+    initiatorId: SESSION.user.User_ID,
+    area: payload.area_name,
+    hazards: payload.hazards,
+    ppe: payload.ppe_required,
+    supervisor: payload.supervisor,
+    workers: payload.assigned_workers,
+    specialRoles: payload.special_roles,
+    maintenance: payload.maintenance_required,
+    tentativeStart: payload.tentative_start
+  }});
   btn.disabled = false;
   btn.textContent = 'Submit Permit';
 
   if (res.success) {
-    toast(`Permit created! ID: ${res.permit_id || 'Generated'}`, 'success');
+    const pid = res.message?.match(/PTW-\d+-\d+/)?.[0] || 'PTW-NEW';
+    toast(`${res.message}`, 'success');
+    // Cache locally
+    APP_DATA.permits.push({
+      Permit_ID: pid,
+      Permit_Type: payload.permit_type,
+      Area_Name: payload.area_name,
+      Initiator_User_ID: SESSION.user.User_ID,
+      Current_Status: 'Pending Area HOD Approval',
+      Initiation_Timestamp: new Date().toISOString(),
+      Hazards_Selected: payload.hazards,
+      PPE_Required: payload.ppe_required,
+      Assigned_Worker_IDs: payload.assigned_workers,
+      Supervisor_User_ID: payload.supervisor,
+      Maintenance_Required: payload.maintenance_required,
+      Tentative_Start_DateTime: payload.tentative_start
+    });
     clearPermitForm();
-    APP_DATA.permits = [];
   } else {
     toast(res.message || 'Permit creation failed. Check API.', 'error');
   }
@@ -2001,8 +2022,8 @@ async function loadApprovals() {
   const el = document.getElementById('approvals-list');
   el.innerHTML = '<div class="empty-state"><div class="spinner dark"></div></div>';
 
-  const res = await api('getPermits', { for_approval: true });
-  const permits = (res.success && res.permits) ? res.permits : APP_DATA.permits;
+  // Use locally cached permits (no getPermits endpoint in backend)
+  const permits = APP_DATA.permits;
 
   const role = SESSION.user?.Role;
   const statusMap = {
@@ -2045,9 +2066,8 @@ async function loadApprovals() {
 // ADMIN
 // ============================================================
 async function loadAdminUsers() {
-  const res = await api('getWorkers', { type: 'users' });
   const tbody = document.getElementById('admin-users-table');
-  // Show local session user as demo
+  // No read endpoint in backend — show current session user
   tbody.innerHTML = `
     <tr>
       <td><strong>${SESSION.user?.User_ID}</strong></td>
@@ -2074,10 +2094,11 @@ async function submitAddUser() {
 
   if (!id || !name || !role || !pwd) { toast('Fill all required fields.', 'error'); return; }
 
-  const res = await api('adminAssignRole', { user_id: id, name, role, email, phone, password: pwd });
+  // Backend expects: { action: 'addEmployee', employeeData: {...} }
+  const res = await api('addEmployee', { employeeData: { id, name, role, email, phone, password: pwd } });
   if (res.success) {
     closeModal('add-user-modal');
-    toast('User added successfully!');
+    toast(res.message || 'User added successfully!');
     loadAdminUsers();
   } else {
     toast(res.message || 'Failed to add user.', 'error');
@@ -2095,13 +2116,21 @@ async function submitAddContractor() {
 
   if (!name) { toast('Company name required.', 'error'); return; }
 
-  const res = await api('getContractors', { action_add: true, company: name, contact, phone });
-  if (res.success) {
-    closeModal('add-contractor-modal');
-    toast('Contractor added!');
-  } else {
-    toast(res.message || 'Failed. Check API.', 'error');
-  }
+  // No contractor endpoint in backend yet — store locally
+  const newId = 'CON-' + (APP_DATA.contractors.length + 1).toString().padStart(3, '0');
+  APP_DATA.contractors.push({ id: newId, name, contact, phone, status: 'Active' });
+  const tbody = document.getElementById('contractors-table');
+  tbody.innerHTML = APP_DATA.contractors.map(c => `
+    <tr>
+      <td><strong>${c.id}</strong></td>
+      <td>${c.name}</td>
+      <td>${c.contact || '—'}</td>
+      <td>${c.phone || '—'}</td>
+      <td><span class="badge badge-green">Active</span></td>
+    </tr>
+  `).join('');
+  closeModal('add-contractor-modal');
+  toast('Contractor added locally! Add a backend endpoint to persist.');
 }
 
 // Click outside to close modals
