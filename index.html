@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dhanuka Safety Kavach</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --g1: #00C853;
+    --g2: #1B5E20;
+    --g3: #4CAF50;
+    --g4: #E8F5E9;
+    --g5: #A5D6A7;
+    --white: #ffffff;
+    --off: #F9FBF9;
+    --gray: #637363;
+    --dark: #0D1F0D;
+    --border: #C8E6C9;
+    --shadow: 0 4px 24px rgba(0,200,83,0.10);
+    --shadow2: 0 2px 8px rgba(27,94,32,0.08);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --font: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--off);
+    color: var(--dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(24px);} to { opacity:1; transform:translateY(0);} }
+  @keyframes fadeIn { from { opacity:0;} to { opacity:1;} }
+  @keyframes slideLeft { from { opacity:0; transform:translateX(-32px);} to { opacity:1; transform:translateX(0);} }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,200,83,0.3);} 50%{box-shadow:0 0 0 10px rgba(0,200,83,0);} }
+  @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+  @keyframes spin { to { transform:rotate(360deg);} }
+  @keyframes dot { 0%,80%,100%{opacity:0;} 40%{opacity:1;} }
+
+  /* ─── LOADING SCREEN ─── */
+  #loading-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--dark);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 24px;
+    transition: opacity 0.5s ease;
+  }
+  #loading-screen .logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px; letter-spacing: 4px;
+    color: var(--g1);
+  }
+  #loading-screen .sub { color: var(--g5); font-size: 14px; letter-spacing: 2px; text-transform:uppercase; }
+  .loader-bar {
+    width: 200px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;
+  }
+  .loader-fill {
+    height: 100%; background: var(--g1); width: 0%; border-radius: 2px;
+    transition: width 1.5s ease;
+  }
+
+  /* ─── LOGIN PAGE ─── */
+  #login-page {
+    display: none; min-height: 100vh;
+    background: linear-gradient(135deg, var(--dark) 0%, #0a2a0a 50%, #0D2D0D 100%);
+    position: relative; overflow: hidden;
+    animation: fadeIn 0.6s ease;
+  }
+  #login-page::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 80%, rgba(0,200,83,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(76,175,80,0.10) 0%, transparent 50%);
+  }
+  .login-grid {
+    display: grid; grid-template-columns: 1fr 480px; min-height: 100vh;
+    position: relative; z-index: 1;
+  }
+  .login-left {
+    display: flex; flex-direction: column; justify-content: center; padding: 60px;
+    animation: slideLeft 0.7s ease 0.2s both;
+  }
+  .login-left .eyebrow {
+    font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--g1); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .login-left .eyebrow::before {
+    content: ''; display: block; width: 30px; height: 2px; background: var(--g1);
+  }
+  .login-left h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px; line-height: 1; color: var(--white);
+    margin-bottom: 16px; letter-spacing: 2px;
+  }
+  .login-left h1 span { color: var(--g1); }
+  .login-left p { color: var(--g5); font-size: 16px; line-height: 1.7; max-width: 420px; margin-bottom: 40px; }
+  .feature-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill {
+    border: 1px solid rgba(0,200,83,0.3); color: var(--g5);
+    padding: 6px 14px; border-radius: 100px;
+    font-size: 12px; letter-spacing: 0.5px;
+  }
+  .login-right {
+    background: rgba(255,255,255,0.04); border-left: 1px solid rgba(0,200,83,0.15);
+    display: flex; align-items: center; justify-content: center; padding: 40px;
+    backdrop-filter: blur(10px);
+    animation: fadeUp 0.7s ease 0.3s both;
+  }
+  .login-card {
+    width: 100%; max-width: 380px;
+  }
+  .login-card .card-title {
+    font-size: 24px; font-weight: 700; color: var(--white); margin-bottom: 6px;
+  }
+  .login-card .card-sub { color: var(--gray); font-size: 14px; margin-bottom: 32px; }
+
+  /* ─── FORM ELEMENTS ─── */
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+    color: var(--g5); margin-bottom: 8px; text-transform: uppercase;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 13px 16px;
+    background: rgba(255,255,255,0.06); border: 1.5px solid rgba(0,200,83,0.2);
+    border-radius: var(--radius-sm); color: var(--white);
+    font-family: var(--font); font-size: 15px;
+    transition: all 0.2s ease; outline: none;
+  }
+  .form-input::placeholder { color: rgba(255,255,255,0.2); }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--g1); background: rgba(0,200,83,0.08);
+    box-shadow: 0 0 0 3px rgba(0,200,83,0.15);
+  }
+  .form-select option { background: var(--dark); color: var(--white); }
+  .form-textarea { resize: vertical; min-height: 90px; }
+
+  /* Light theme form */
+  .light .form-input, .light .form-select, .light .form-textarea {
+    background: var(--white); border-color: var(--border); color: var(--dark);
+  }
+  .light .form-input::placeholder { color: #aaa; }
+  .light .form-label { color: var(--gray); }
+  .light .form-input:focus, .light .form-select:focus, .light .form-textarea:focus {
+    border-color: var(--g1); background: var(--white); box-shadow: 0 0 0 3px rgba(0,200,83,0.12);
+  }
+  .light .form-select option { background: var(--white); color: var(--dark); }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 24px; border-radius: var(--radius-sm);
+    font-family: var(--font); font-size: 15px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--g1); color: var(--dark);
+    animation: pulse 2s infinite;
+  }
+  .btn-primary:hover { background: #00E676; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,200,83,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-outline {
+    background: transparent; color: var(--g1); border: 1.5px solid var(--g1);
+  }
+  .btn-outline:hover { background: rgba(0,200,83,0.1); }
+  .btn-danger {
+    background: #FF5252; color: var(--white);
+  }
+  .btn-danger:hover { background: #FF1744; }
+  .btn-ghost {
+    background: transparent; color: var(--gray); border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--g3); color: var(--g2); }
+  .btn-sm { padding: 8px 16px; font-size: 13px; }
+  .btn-full { width: 100%; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  /* ─── APP SHELL ─── */
+  #app { display: none; min-height: 100vh; }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+    background: var(--dark);
+    border-right: 1px solid rgba(0,200,83,0.12);
+    display: flex; flex-direction: column; z-index: 100;
+    transition: transform 0.3s ease;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid rgba(0,200,83,0.10);
+  }
+  .sidebar-logo .logo-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; letter-spacing: 2px; color: var(--g1);
+    line-height: 1;
+  }
+  .sidebar-logo .logo-sub {
+    font-size: 10px; color: var(--gray); letter-spacing: 2px; text-transform: uppercase;
+  }
+  .sidebar-user {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0,200,83,0.08);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .user-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--g1), var(--g2));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; color: var(--white); flex-shrink: 0;
+  }
+  .user-name { font-size: 14px; font-weight: 600; color: var(--white); }
+  .user-role {
+    font-size: 11px; color: var(--g5); letter-spacing: 0.5px;
+    background: rgba(0,200,83,0.15); padding: 2px 8px; border-radius: 100px;
+    display: inline-block; margin-top: 2px;
+  }
+
+  nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+  .nav-section { margin-bottom: 4px; }
+  .nav-section-label {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,255,255,0.2); padding: 10px 20px 6px; font-weight: 600;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; cursor: pointer; border-radius: 0;
+    color: rgba(255,255,255,0.5); font-size: 14px; font-weight: 500;
+    transition: all 0.2s ease; position: relative;
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { color: var(--white); background: rgba(0,200,83,0.07); }
+  .nav-item.active {
+    color: var(--g1);
+    background: rgba(0,200,83,0.12);
+    font-weight: 600;
+  }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 50%;
+    transform: translateY(-50%); width: 3px; height: 60%;
+    background: var(--g1); border-radius: 0 2px 2px 0;
+  }
+  .nav-icon { width: 20px; text-align: center; font-size: 16px; flex-shrink: 0; }
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(0,200,83,0.08);
+  }
+
+  /* ─── MAIN CONTENT ─── */
+  .main {
+    margin-left: 260px; min-height: 100vh;
+    background: var(--off);
+  }
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    height: 64px; padding: 0 32px;
+    background: rgba(249,251,249,0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-title {
+    font-size: 20px; font-weight: 700; color: var(--dark);
+  }
+  .topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+  /* ─── PAGE SECTIONS ─── */
+  .page { display: none; padding: 32px; animation: fadeUp 0.4s ease; }
+  .page.active { display: block; }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    box-shadow: var(--shadow2);
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-size: 16px; font-weight: 700; color: var(--dark); }
+  .card-sub { font-size: 13px; color: var(--gray); margin-top: 2px; }
+
+  /* ─── STAT CARDS ─── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px;
+    box-shadow: var(--shadow2);
+    display: flex; align-items: flex-start; justify-content: space-between;
+    animation: fadeUp 0.4s ease both;
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(4) { animation-delay: 0.2s; }
+  .stat-value { font-size: 36px; font-weight: 700; color: var(--dark); line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--gray); margin-top: 4px; font-weight: 500; }
+  .stat-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--g4); display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  .stat-change {
+    font-size: 12px; margin-top: 10px; color: var(--g1); font-weight: 600;
+  }
+
+  /* ─── TABLES ─── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+  }
+  th {
+    background: var(--g4); color: var(--g2); font-weight: 700;
+    padding: 12px 16px; text-align: left; font-size: 12px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  th:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+  th:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  td { padding: 14px 16px; border-bottom: 1px solid var(--g4); color: var(--dark); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--g4); }
+
+  /* ─── BADGES ─── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 100px;
+    font-size: 12px; font-weight: 600;
+  }
+  .badge-green { background: #E8F5E9; color: #2E7D32; }
+  .badge-blue { background: #E3F2FD; color: #1565C0; }
+  .badge-orange { background: #FFF3E0; color: #E65100; }
+  .badge-red { background: #FFEBEE; color: #C62828; }
+  .badge-gray { background: #F5F5F5; color: #616161; }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+  .modal {
+    background: var(--white); border-radius: 20px;
+    width: 100%; max-width: 580px; max-height: 90vh;
+    overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+    animation: fadeUp 0.3s ease;
+  }
+  .modal-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: var(--white); z-index: 1;
+    border-radius: 20px 20px 0 0;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; color: var(--dark); }
+  .modal-body { padding: 24px 28px; }
+  .modal-footer {
+    padding: 16px 28px 24px;
+    display: flex; gap: 10px; justify-content: flex-end;
+  }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--g4); border: none; cursor: pointer;
+    font-size: 18px; color: var(--gray); display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .modal-close:hover { background: #FFEBEE; color: #C62828; }
+
+  /* ─── TABS ─── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--g4); border-radius: var(--radius-sm); padding: 4px; }
+  .tab {
+    flex: 1; padding: 10px 16px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    border: none; background: transparent; color: var(--gray);
+    transition: all 0.2s;
+  }
+  .tab.active { background: var(--white); color: var(--g2); box-shadow: var(--shadow2); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ─── SEARCH BAR ─── */
+  .search-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--white); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 14px; flex: 1;
+    transition: all 0.2s;
+  }
+  .search-bar:focus-within { border-color: var(--g1); box-shadow: 0 0 0 3px rgba(0,200,83,0.12); }
+  .search-bar input { border: none; outline: none; background: transparent; flex: 1; font-family: var(--font); font-size: 14px; color: var(--dark); }
+  .search-bar input::placeholder { color: #bbb; }
+
+  /* ─── WEBCAM ─── */
+  #webcam-preview, #webcam-capture { width: 100%; border-radius: 12px; }
+  #webcam-preview { display: none; }
+  #webcam-canvas { display: none; }
+  .photo-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; display: none; }
+
+  /* ─── WORKER CARD ─── */
+  .worker-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+    display: flex; align-items: center; gap: 14px;
+    transition: all 0.2s; cursor: pointer;
+  }
+  .worker-card:hover { border-color: var(--g1); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .worker-avatar {
+    width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--g4); flex-shrink: 0;
+    background: var(--g4); display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .worker-id {
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--g1);
+  }
+  .worker-name { font-weight: 600; font-size: 15px; color: var(--dark); }
+  .worker-meta { font-size: 12px; color: var(--gray); }
+
+  /* ─── PERMIT CARD ─── */
+  .permit-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    transition: all 0.2s; margin-bottom: 12px;
+  }
+  .permit-card:hover { border-color: var(--g1); box-shadow: var(--shadow); }
+  .permit-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .permit-id { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; color: var(--dark); }
+  .permit-type-badge {
+    padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700;
+    background: var(--g4); color: var(--g2); letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .permit-meta { display: flex; gap: 20px; font-size: 13px; color: var(--gray); }
+  .permit-meta span { display: flex; align-items: center; gap: 5px; }
+
+  /* ─── ALERTS ─── */
+  .alert {
+    padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px;
+    margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+    animation: fadeUp 0.3s ease;
+  }
+  .alert-error { background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; }
+  .alert-success { background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9; }
+  .alert-info { background: #E3F2FD; color: #1565C0; border: 1px solid #BBDEFB; }
+
+  /* ─── DIVIDER ─── */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* ─── GRID LAYOUT ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ─── CHECKBOX GROUP ─── */
+  .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .check-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); cursor: pointer; transition: all 0.2s;
+    background: var(--white);
+  }
+  .check-item:hover { border-color: var(--g3); }
+  .check-item.selected { border-color: var(--g1); background: var(--g4); }
+  .check-item input { accent-color: var(--g1); width: 16px; height: 16px; flex-shrink: 0; }
+  .check-item label { font-size: 13px; font-weight: 500; cursor: pointer; color: var(--dark); }
+
+  /* ─── SPINNER ─── */
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: var(--white); border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  .spinner.dark {
+    border-color: rgba(0,0,0,0.15); border-top-color: var(--g2);
+  }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--gray);
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state p { font-size: 15px; }
+
+  /* ─── TOAST ─── */
+  #toast-container {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .toast {
+    background: var(--dark); color: var(--white);
+    padding: 14px 20px; border-radius: var(--radius-sm);
+    font-size: 14px; display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    animation: fadeUp 0.3s ease;
+    border-left: 4px solid var(--g1); min-width: 280px;
+  }
+  .toast.error { border-color: #FF5252; }
+  .toast.success { border-color: var(--g1); }
+
+  /* ─── STEP INDICATOR ─── */
+  .steps {
+    display: flex; align-items: center; margin-bottom: 28px; gap: 0;
+  }
+  .step-item {
+    display: flex; align-items: center; flex: 1;
+  }
+  .step-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--gray); flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .step-circle.active { border-color: var(--g1); background: var(--g1); color: var(--dark); }
+  .step-circle.done { border-color: var(--g2); background: var(--g2); color: var(--white); }
+  .step-line { flex: 1; height: 2px; background: var(--border); transition: all 0.3s; }
+  .step-line.done { background: var(--g1); }
+  .step-label { font-size: 11px; color: var(--gray); text-align: center; margin-top: 4px; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .login-grid { grid-template-columns: 1fr; }
+    .login-left { display: none; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .sidebar { transform: translateX(-260px); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* ─── PERMIT WORKFLOW VIZ ─── */
+  .workflow-steps {
+    display: flex; gap: 0; overflow-x: auto; padding: 16px 0; margin-bottom: 20px;
+  }
+  .wf-step {
+    display: flex; align-items: center; flex-shrink: 0;
+  }
+  .wf-node {
+    text-align: center; padding: 12px 16px;
+    background: var(--g4); border-radius: var(--radius-sm);
+    min-width: 100px; cursor: default;
+  }
+  .wf-node.current { background: var(--g1); }
+  .wf-node.done { background: var(--g2); }
+  .wf-node-icon { font-size: 20px; margin-bottom: 4px; }
+  .wf-node-label { font-size: 11px; font-weight: 600; color: var(--g2); }
+  .wf-node.current .wf-node-label { color: var(--dark); }
+  .wf-node.done .wf-node-label { color: var(--white); }
+  .wf-arrow { width: 24px; height: 2px; background: var(--border); position: relative; }
+  .wf-arrow::after { content: '▶'; position: absolute; right: -4px; top: -7px; font-size: 10px; color: var(--border); }
+
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-title { font-size: 20px; font-weight: 700; color: var(--dark); }
+  .section-sub { font-size: 14px; color: var(--gray); margin-top: 2px; }
+
+  /* ─── INLINE WORKER SELECT ─── */
+  .worker-select-list {
+    max-height: 200px; overflow-y: auto;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--white);
+  }
+  .worker-select-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--g4);
+    transition: background 0.15s;
+  }
+  .worker-select-item:last-child { border-bottom: none; }
+  .worker-select-item:hover { background: var(--g4); }
+  .worker-select-item.selected { background: #E8F5E9; }
+  .worker-select-item input[type=checkbox] { accent-color: var(--g1); }
+
+  /* Breadcrumb */
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gray); margin-bottom: 20px; }
+  .breadcrumb .sep { color: var(--border); }
+  .breadcrumb .current { color: var(--dark); font-weight: 600; }
+
+  /* Training badges */
+  .training-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--g4); color: var(--g2); border-radius: 100px;
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+  }
+
+  /* Password strength */
+  .pwd-strength { height: 4px; border-radius: 2px; background: var(--border); margin-top: 8px; overflow: hidden; }
+  .pwd-strength-fill { height: 100%; border-radius: 2px; width: 0%; transition: all 0.3s; }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen">
+  <div class="logo-text">SAFETY KAVACH</div>
+  <div class="sub">Dhanuka Agritech Limited</div>
+  <div class="loader-bar"><div class="loader-fill" id="loader-fill"></div></div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div id="login-page">
+  <div class="login-grid">
+    <div class="login-left">
+      <div class="eyebrow">Dhanuka Agritech Limited</div>
+      <h1>Safety<br><span>Kavach</span><br>System</h1>
+      <p>Comprehensive workplace safety management — inductions, work permits, and multi-step approvals in one integrated platform.</p>
+      <div class="feature-pills">
+        <span class="pill">🛡️ Worker Induction</span>
+        <span class="pill">📋 Work Permits</span>
+        <span class="pill">✅ Multi-Step Approvals</span>
+        <span class="pill">📸 Photo Upload</span>
+        <span class="pill">🔐 Role-Based Access</span>
+        <span class="pill">📊 Real-Time Dashboard</span>
+      </div>
+    </div>
+    <div class="login-right">
+      <div class="login-card">
+        <div class="card-title">Welcome Back</div>
+        <div class="card-sub">Sign in to your Safety Kavach account</div>
+        <div id="login-error" class="alert alert-error" style="display:none;"></div>
+        <div class="form-group">
+          <label class="form-label">User ID</label>
+          <input type="text" id="login-userid" class="form-input" placeholder="Enter your User ID" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="login-password" class="form-input" placeholder="Enter your password">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="handleLogin()" id="login-btn">
+          Sign In
+        </button>
+        <div style="margin-top:20px; text-align:center;">
+          <div style="font-size:12px; color:var(--gray); margin-bottom:8px;">Demo Credentials</div>
+          <div style="font-size:13px; color:var(--g5);">ID: <strong>33135</strong> &nbsp;|&nbsp; Password: <strong>Dhanuka#321</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay" id="change-pwd-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔐 Change Password Required</div>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info">You must change your password before continuing.</div>
+      <div class="form-group light">
+        <label class="form-label">New Password</label>
+        <input type="password" id="new-pwd" class="form-input" placeholder="Minimum 8 characters" oninput="checkPwdStrength(this.value)">
+        <div class="pwd-strength"><div class="pwd-strength-fill" id="pwd-strength-fill"></div></div>
+      </div>
+      <div class="form-group light">
+        <label class="form-label">Confirm Password</label>
+        <input type="password" id="confirm-pwd" class="form-input" placeholder="Repeat password">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="submitChangePassword()">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">⛑ Safety Kavach</div>
+      <div class="logo-sub">Dhanuka Agritech</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">?</div>
+      <div>
+        <div class="user-name" id="sidebar-name">Loading...</div>
+        <div class="user-role" id="sidebar-role">—</div>
+      </div>
+    </div>
+    <nav id="main-nav">
+      <div class="nav-section">
+        <div class="nav-section-label">Overview</div>
+        <button class="nav-item active" onclick="showPage('dashboard', this)">
+          <span class="nav-icon">📊</span> Dashboard
+        </button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Workers</div>
+        <button class="nav-item" onclick="showPage('workers', this)">
+          <span class="nav-icon">👷</span> Worker List
+        </button>
+        <button class="nav-item" onclick="showPage('induction', this)">
+          <span class="nav-icon">➕</span> New Induction
+        </button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Permits</div>
+        <button class="nav-item" onclick="showPage('permits', this)">
+          <span class="nav-icon">📋</span> All Permits
+        </button>
+        <button class="nav-item" id="nav-create-permit" onclick="showPage('create-permit', this)">
+          <span class="nav-icon">✍️</span> Create Permit
+        </button>
+        <button class="nav-item" id="nav-my-approvals" onclick="showPage('approvals', this)">
+          <span class="nav-icon">✅</span> My Approvals
+        </button>
+      </div>
+      <div class="nav-section" id="admin-nav" style="display:none">
+        <div class="nav-section-label">Administration</div>
+        <button class="nav-item" onclick="showPage('admin', this)">
+          <span class="nav-icon">⚙️</span> Admin Panel
+        </button>
+        <button class="nav-item" onclick="showPage('contractors', this)">
+          <span class="nav-icon">🏢</span> Contractors
+        </button>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-full btn-sm" onclick="handleLogout()">🚪 Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <div id="topbar-user" style="font-size:14px; color:var(--gray);"></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div>
+            <div class="stat-value" id="stat-workers">—</div>
+            <div class="stat-label">Total Workers</div>
+            <div class="stat-change">↑ Inducted</div>
+          </div>
+          <div class="stat-icon">👷</div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-value" id="stat-permits">—</div>
+            <div class="stat-label">Active Permits</div>
+            <div class="stat-change">In Progress</div>
+          </div>
+          <div class="stat-icon">📋</div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-value" id="stat-pending">—</div>
+            <div class="stat-label">Pending Approval</div>
+            <div class="stat-change">Awaiting Action</div>
+          </div>
+          <div class="stat-icon">⏳</div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-value" id="stat-contractors">—</div>
+            <div class="stat-label">Contractors</div>
+            <div class="stat-change">Registered</div>
+          </div>
+          <div class="stat-icon">🏢</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Recent Workers</div>
+              <div class="card-sub">Latest inducted workers</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="showPage('workers', document.querySelector('[onclick*=workers]'))">View All</button>
+          </div>
+          <div id="dashboard-workers-list">
+            <div class="empty-state"><div class="empty-icon">👷</div><p>No workers yet</p></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Recent Permits</div>
+              <div class="card-sub">Latest work permits</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="showPage('permits', document.querySelector('[onclick*=permits]'))">View All</button>
+          </div>
+          <div id="dashboard-permits-list">
+            <div class="empty-state"><div class="empty-icon">📋</div><p>No permits yet</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKERS LIST -->
+    <div class="page" id="page-workers">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Workers</div>
+          <div class="section-sub">All inducted workers</div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('induction', document.querySelector('[onclick*=induction]'))">
+          ➕ New Induction
+        </button>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+          <div class="search-bar" style="max-width:320px;">
+            🔍
+            <input type="text" id="worker-search" placeholder="Search by name, ID, contractor..." oninput="filterWorkers()">
+          </div>
+          <select class="form-input" style="max-width:180px;background:var(--white);color:var(--dark);border-color:var(--border);" id="worker-status-filter" onchange="filterWorkers()">
+            <option value="">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div id="workers-grid" class="grid-3" style="gap:12px;">
+          <div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">👷</div><p>Loading workers...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDUCTION FORM -->
+    <div class="page" id="page-induction">
+      <div class="breadcrumb">
+        <span>Workers</span><span class="sep">›</span><span class="current">New Induction</span>
+      </div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">Worker Induction</div>
+          <div class="section-sub">Register a new worker with photo and training details</div>
+        </div>
+      </div>
+      <div class="grid-2" style="align-items:start;">
+        <!-- Photo Capture -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📸 Worker Photo</div></div>
+          <div style="text-align:center;">
+            <div id="webcam-placeholder" style="background:var(--g4);border-radius:12px;padding:40px;margin-bottom:16px;cursor:pointer;" onclick="startWebcam()">
+              <div style="font-size:48px;margin-bottom:8px;">📷</div>
+              <div style="font-size:14px;color:var(--gray);">Click to open camera</div>
+            </div>
+            <video id="webcam-capture" autoplay playsinline style="display:none;width:100%;border-radius:12px;max-height:280px;object-fit:cover;"></video>
+            <canvas id="webcam-canvas" style="display:none;"></canvas>
+            <img id="photo-preview" class="photo-preview" alt="Captured photo">
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;" id="webcam-controls" style="display:none;">
+              <button class="btn btn-primary btn-sm" id="capture-btn" onclick="capturePhoto()" style="display:none;">📸 Capture</button>
+              <button class="btn btn-outline btn-sm" id="retake-btn" onclick="retakePhoto()" style="display:none;">🔄 Retake</button>
+              <button class="btn btn-ghost btn-sm" onclick="stopWebcam()" id="stop-btn" style="display:none;">✖ Cancel</button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="form-group light">
+            <label class="form-label">Or Upload Photo</label>
+            <input type="file" id="photo-upload" accept="image/*" class="form-input" onchange="handlePhotoUpload(event)">
+          </div>
+        </div>
+
+        <!-- Worker Details -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 Worker Details</div></div>
+          <div class="form-group light">
+            <label class="form-label">Worker Name *</label>
+            <input type="text" id="w-name" class="form-input" placeholder="Full name">
+          </div>
+          <div class="grid-2">
+            <div class="form-group light">
+              <label class="form-label">Contractor Name *</label>
+              <input type="text" id="w-contractor" class="form-input" placeholder="Contractor firm">
+            </div>
+            <div class="form-group light">
+              <label class="form-label">Designation</label>
+              <input type="text" id="w-designation" class="form-input" placeholder="e.g. Welder, Helper">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group light">
+              <label class="form-label">Blood Group</label>
+              <select id="w-blood" class="form-select">
+                <option value="">Select</option>
+                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+              </select>
+            </div>
+            <div class="form-group light">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" id="w-dob" class="form-input">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group light">
+              <label class="form-label">Aadhar Number</label>
+              <input type="text" id="w-aadhar" class="form-input" placeholder="12-digit Aadhar" maxlength="12">
+            </div>
+            <div class="form-group light">
+              <label class="form-label">Mobile Number *</label>
+              <input type="tel" id="w-mobile" class="form-input" placeholder="10-digit mobile" maxlength="10">
+            </div>
+          </div>
+          <div class="form-group light">
+            <label class="form-label">Address</label>
+            <textarea id="w-address" class="form-textarea" placeholder="Full residential address"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Training -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header"><div class="card-title">🎓 Training Authorizations</div></div>
+        <div class="check-grid">
+          <label class="check-item" onclick="this.classList.toggle('selected')">
+            <input type="checkbox" value="General" id="tr-general"> <label for="tr-general">General Safety</label>
+          </label>
+          <label class="check-item" onclick="this.classList.toggle('selected')">
+            <input type="checkbox" value="Hot" id="tr-hot"> <label for="tr-hot">Hot Work</label>
+          </label>
+          <label class="check-item" onclick="this.classList.toggle('selected')">
+            <input type="checkbox" value="Height" id="tr-height"> <label for="tr-height">Working at Height</label>
+          </label>
+          <label class="check-item" onclick="this.classList.toggle('selected')">
+            <input type="checkbox" value="Confined Space" id="tr-confined"> <label for="tr-confined">Confined Space</label>
+          </label>
+          <label class="check-item" onclick="this.classList.toggle('selected')">
+            <input type="checkbox" value="Excavation" id="tr-excavation"> <label for="tr-excavation">Excavation</label>
+          </label>
+          <label class="check-item" onclick="this.classList.toggle('selected')">
+            <input type="checkbox" value="Heavy Lifting" id="tr-lifting"> <label for="tr-lifting">Heavy Lifting</label>
+          </label>
+        </div>
+        <div style="margin-top:20px; display:flex; gap:12px; justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="clearInductionForm()">Clear Form</button>
+          <button class="btn btn-primary" onclick="submitWorker()" id="submit-worker-btn">
+            Submit Induction
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERMITS LIST -->
+    <div class="page" id="page-permits">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Work Permits</div>
+          <div class="section-sub">All issued permits and their status</div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('create-permit', document.getElementById('nav-create-permit'))">
+          ✍️ Create Permit
+        </button>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+          <div class="search-bar" style="max-width:320px;">🔍 <input type="text" id="permit-search" placeholder="Search permit ID, area..." oninput="filterPermits()"></div>
+          <select class="form-input" style="max-width:160px;background:var(--white);color:var(--dark);border-color:var(--border);" id="permit-type-filter" onchange="filterPermits()">
+            <option value="">All Types</option>
+            <option>Hot Work</option>
+            <option>Height Work</option>
+            <option>Confined Space</option>
+            <option>Cold Work</option>
+            <option>Excavation</option>
+          </select>
+          <select class="form-input" style="max-width:160px;background:var(--white);color:var(--dark);border-color:var(--border);" id="permit-status-filter" onchange="filterPermits()">
+            <option value="">All Status</option>
+            <option>Pending HOD</option>
+            <option>Pending Contractor</option>
+            <option>Pending Safety</option>
+            <option>Pending Plant Head</option>
+            <option>Approved</option>
+            <option>Rejected</option>
+          </select>
+        </div>
+        <div id="permits-list">
+          <div class="empty-state"><div class="empty-icon">📋</div><p>Loading permits...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE PERMIT -->
+    <div class="page" id="page-create-permit">
+      <div class="breadcrumb">
+        <span>Permits</span><span class="sep">›</span><span class="current">Create New Permit</span>
+      </div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">Create Work Permit</div>
+          <div class="section-sub">Fill all required fields to initiate a work permit</div>
+        </div>
+      </div>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><div class="card-title">📝 Permit Details</div></div>
+            <div class="form-group light">
+              <label class="form-label">Permit Type *</label>
+              <select id="p-type" class="form-select" onchange="onPermitTypeChange()">
+                <option value="">Select permit type</option>
+                <option>Hot Work</option>
+                <option>Height Work</option>
+                <option>Confined Space</option>
+                <option>Cold Work</option>
+                <option>Excavation</option>
+              </select>
+            </div>
+            <div class="form-group light">
+              <label class="form-label">Area / Location *</label>
+              <input type="text" id="p-area" class="form-input" placeholder="Work area name">
+            </div>
+            <div class="grid-2">
+              <div class="form-group light">
+                <label class="form-label">Supervisor</label>
+                <input type="text" id="p-supervisor" class="form-input" placeholder="Supervisor name">
+              </div>
+              <div class="form-group light">
+                <label class="form-label">Tentative Start Date</label>
+                <input type="datetime-local" id="p-startdate" class="form-input">
+              </div>
+            </div>
+            <div class="form-group light">
+              <label class="form-label">Maintenance Required?</label>
+              <select id="p-maintenance" class="form-select">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+
+            <!-- Special roles shown based on type -->
+            <div id="special-roles-section" style="display:none;">
+              <div class="divider"></div>
+              <div class="form-group light" id="fire-watcher-group" style="display:none;">
+                <label class="form-label">🔥 Fire Watcher Name</label>
+                <input type="text" id="p-fire-watcher" class="form-input" placeholder="Fire Watcher">
+              </div>
+              <div class="form-group light" id="entrant-group" style="display:none;">
+                <label class="form-label">🧍 Entrant Name</label>
+                <input type="text" id="p-entrant" class="form-input" placeholder="Entrant">
+              </div>
+              <div class="form-group light" id="attendant-group" style="display:none;">
+                <label class="form-label">🧑‍🤝‍🧑 Attendant Name</label>
+                <input type="text" id="p-attendant" class="form-input" placeholder="Attendant">
+              </div>
+            </div>
+          </div>
+
+          <!-- Hazards -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><div class="card-title">⚠️ Hazards</div></div>
+            <div class="check-grid" id="hazards-grid">
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Fire"> <label>Fire</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Chemical Exposure"> <label>Chemical Exposure</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Fall from Height"> <label>Fall from Height</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Electrical"> <label>Electrical</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Oxygen Deficiency"> <label>Oxygen Deficiency</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Noise"> <label>Noise</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Dust"> <label>Dust</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Manual Handling"> <label>Manual Handling</label></label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- PPE -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><div class="card-title">🦺 PPE Required</div></div>
+            <div class="check-grid">
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Helmet"> <label>Helmet</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Safety Shoes"> <label>Safety Shoes</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Safety Harness"> <label>Safety Harness</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Gloves"> <label>Gloves</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Fire Suit"> <label>Fire Suit</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Gas Mask"> <label>Gas Mask</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Eye Protection"> <label>Eye Protection</label></label>
+              <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" value="Face Shield"> <label>Face Shield</label></label>
+            </div>
+          </div>
+
+          <!-- Workers -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">👷 Assign Workers</div></div>
+            <div class="form-group light">
+              <label class="form-label">Filter by Contractor</label>
+              <input type="text" id="worker-contractor-filter" class="form-input" placeholder="Type contractor name..." oninput="filterWorkerSelect()">
+            </div>
+            <div class="search-bar" style="margin-bottom:12px;">🔍 <input type="text" id="worker-select-search" placeholder="Search worker..." oninput="filterWorkerSelect()"></div>
+            <div class="worker-select-list" id="worker-select-list">
+              <div style="padding:20px;text-align:center;color:var(--gray);font-size:14px;">Loading workers...</div>
+            </div>
+            <div id="selected-workers-display" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-ghost" onclick="clearPermitForm()">Clear</button>
+        <button class="btn btn-primary" onclick="submitPermit()" id="submit-permit-btn">
+          Submit Permit
+        </button>
+      </div>
+    </div>
+
+    <!-- APPROVALS -->
+    <div class="page" id="page-approvals">
+      <div class="section-header">
+        <div>
+          <div class="section-title">My Approvals</div>
+          <div class="section-sub">Permits awaiting your action</div>
+        </div>
+      </div>
+      <div id="approvals-list">
+        <div class="empty-state"><div class="empty-icon">✅</div><p>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div class="page" id="page-admin">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Admin Panel</div>
+          <div class="section-sub">User and role management</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddUserModal()">➕ Add User</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">User Management</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User ID</th><th>Name</th><th>Role</th><th>Email</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-table">
+              <tr><td colspan="6" style="text-align:center;color:var(--gray);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTRACTORS -->
+    <div class="page" id="page-contractors">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Contractors</div>
+          <div class="section-sub">Registered contractor companies</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddContractorModal()">➕ Add Contractor</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Company</th><th>Contact Person</th><th>Phone</th><th>Status</th></tr>
+            </thead>
+            <tbody id="contractors-table">
+              <tr><td colspan="5" style="text-align:center;color:var(--gray);">No contractors registered</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- PERMIT DETAIL MODAL -->
+<div class="modal-overlay" id="permit-detail-modal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="permit-modal-title">Permit Details</div>
+        <div id="permit-modal-sub" style="font-size:13px;color:var(--gray);margin-top:2px;"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('permit-detail-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="permit-modal-body"></div>
+    <div class="modal-footer" id="permit-modal-footer"></div>
+  </div>
+</div>
+
+<!-- WORKER DETAIL MODAL -->
+<div class="modal-overlay" id="worker-detail-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Worker Details</div>
+      <button class="modal-close" onclick="closeModal('worker-detail-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="worker-modal-body"></div>
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New User</div>
+      <button class="modal-close" onclick="closeModal('add-user-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="form-group light"><label class="form-label">User ID *</label><input type="text" id="nu-id" class="form-input" placeholder="e.g. 33136"></div>
+        <div class="form-group light"><label class="form-label">Full Name *</label><input type="text" id="nu-name" class="form-input" placeholder="Full name"></div>
+      </div>
+      <div class="form-group light">
+        <label class="form-label">Role *</label>
+        <select id="nu-role" class="form-select">
+          <option value="">Select Role</option>
+          <option>EHS Lead</option>
+          <option>Safety Officer</option>
+          <option>Area Incharge</option>
+          <option>Area HOD</option>
+          <option>Plant Head</option>
+          <option>Contractor Supervisor</option>
+          <option>Maintenance Lead</option>
+        </select>
+      </div>
+      <div class="grid-2">
+        <div class="form-group light"><label class="form-label">Email</label><input type="email" id="nu-email" class="form-input" placeholder="email@dhanuka.com"></div>
+        <div class="form-group light"><label class="form-label">Phone</label><input type="tel" id="nu-phone" class="form-input" placeholder="10-digit"></div>
+      </div>
+      <div class="form-group light"><label class="form-label">Initial Password *</label><input type="password" id="nu-pwd" class="form-input" placeholder="Temporary password"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddUser()">Add User</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CONTRACTOR MODAL -->
+<div class="modal-overlay" id="add-contractor-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Contractor</div>
+      <button class="modal-close" onclick="closeModal('add-contractor-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group light"><label class="form-label">Company Name *</label><input type="text" id="nc-name" class="form-input" placeholder="Contractor company name"></div>
+      <div class="grid-2">
+        <div class="form-group light"><label class="form-label">Contact Person</label><input type="text" id="nc-contact" class="form-input" placeholder="Name"></div>
+        <div class="form-group light"><label class="form-label">Phone Number</label><input type="tel" id="nc-phone" class="form-input" placeholder="Mobile"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-contractor-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddContractor()">Add Contractor</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbwe6vuvTNSC5TL_pW4Vhu8L4p7y8qNKmzsITiNJPBS4XKNZL5zg-Js2FEM0lU9jGWynZA/exec';
+
+let SESSION = { user: null, token: null };
+let APP_DATA = { workers: [], permits: [], contractors: [], users: [] };
+let selectedWorkers = [];
+let capturedPhotoBase64 = null;
+let webcamStream = null;
+
+// ============================================================
+// LOADING SCREEN
+// ============================================================
+window.onload = () => {
+  const fill = document.getElementById('loader-fill');
+  fill.style.width = '100%';
+  setTimeout(() => {
+    const ls = document.getElementById('loading-screen');
+    ls.style.opacity = '0';
+    setTimeout(() => {
+      ls.style.display = 'none';
+      document.getElementById('login-page').style.display = 'block';
+    }, 500);
+  }, 1800);
+};
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'} ${msg}`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ============================================================
+// API CALL
+// ============================================================
+async function api(action, payload = {}) {
+  try {
+    const body = { action, payload };
+    if (SESSION.token) body.auth = { user_id: SESSION.user?.User_ID, token: SESSION.token };
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    return { success: false, message: 'Network error. Check API connection.' };
+  }
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+async function handleLogin() {
+  const userId = document.getElementById('login-userid').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+
+  if (!userId || !password) {
+    errEl.textContent = 'Please enter User ID and Password.';
+    errEl.style.display = 'flex'; return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Signing in...';
+  errEl.style.display = 'none';
+
+  const res = await api('login', { user_id: userId, password });
+
+  btn.disabled = false;
+  btn.textContent = 'Sign In';
+
+  if (res.success) {
+    SESSION.user = res.user;
+    SESSION.token = res.token;
+    if (res.require_password_change) {
+      document.getElementById('change-pwd-modal').classList.add('active');
+    } else {
+      launchApp();
+    }
+  } else {
+    // Demo fallback
+    if (userId === '33135' && password === 'Dhanuka#321') {
+      SESSION.user = { User_ID: '33135', Full_Name: 'Bhanu Pratap', Role: 'EHS Lead', Email_Address: 'bhanupratap@dhanuka.com' };
+      SESSION.token = 'demo-token-' + Date.now();
+      launchApp();
+    } else {
+      errEl.textContent = res.message || 'Invalid credentials.';
+      errEl.style.display = 'flex';
+    }
+  }
+}
+
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+
+// ============================================================
+// PASSWORD STRENGTH
+// ============================================================
+function checkPwdStrength(val) {
+  const fill = document.getElementById('pwd-strength-fill');
+  let strength = 0;
+  if (val.length >= 8) strength++;
+  if (/[A-Z]/.test(val)) strength++;
+  if (/[0-9]/.test(val)) strength++;
+  if (/[^A-Za-z0-9]/.test(val)) strength++;
+  const colors = ['#FF5252','#FF9800','#FFC107','#4CAF50'];
+  fill.style.width = (strength * 25) + '%';
+  fill.style.background = colors[strength - 1] || '#eee';
+}
+
+async function submitChangePassword() {
+  const newPwd = document.getElementById('new-pwd').value;
+  const confirmPwd = document.getElementById('confirm-pwd').value;
+  if (newPwd.length < 8) { toast('Password must be at least 8 characters.', 'error'); return; }
+  if (newPwd !== confirmPwd) { toast('Passwords do not match.', 'error'); return; }
+
+  const res = await api('changePassword', { new_password: newPwd });
+  if (res.success || SESSION.token) {
+    document.getElementById('change-pwd-modal').classList.remove('active');
+    launchApp();
+    toast('Password changed successfully!');
+  } else {
+    toast(res.message || 'Failed to change password.', 'error');
+  }
+}
+
+// ============================================================
+// LAUNCH APP
+// ============================================================
+function launchApp() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  const u = SESSION.user;
+  document.getElementById('sidebar-avatar').textContent = u.Full_Name ? u.Full_Name[0].toUpperCase() : '?';
+  document.getElementById('sidebar-name').textContent = u.Full_Name || u.User_ID;
+  document.getElementById('sidebar-role').textContent = u.Role || 'User';
+  document.getElementById('topbar-user').textContent = u.Email_Address || '';
+
+  // Show admin nav for EHS Lead
+  if (['EHS Lead', 'Admin'].includes(u.Role)) {
+    document.getElementById('admin-nav').style.display = 'block';
+  }
+
+  loadDashboardData();
+}
+
+function handleLogout() {
+  SESSION = { user: null, token: null };
+  APP_DATA = { workers: [], permits: [], contractors: [], users: [] };
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'block';
+  toast('Signed out successfully.');
+}
+
+// ============================================================
+// PAGE NAVIGATION
+// ============================================================
+function showPage(pageId, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  document.getElementById('page-' + pageId)?.classList.add('active');
+  navEl?.classList.add('active');
+
+  const titles = {
+    dashboard: 'Dashboard', workers: 'Workers', induction: 'New Induction',
+    permits: 'Work Permits', 'create-permit': 'Create Permit', approvals: 'My Approvals',
+    admin: 'Admin Panel', contractors: 'Contractors'
+  };
+  document.getElementById('page-title').textContent = titles[pageId] || pageId;
+
+  if (pageId === 'dashboard') loadDashboardData();
+  if (pageId === 'workers') loadWorkers();
+  if (pageId === 'permits') loadPermits();
+  if (pageId === 'create-permit') loadWorkerSelect();
+  if (pageId === 'approvals') loadApprovals();
+  if (pageId === 'admin') loadAdminUsers();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadDashboardData() {
+  // Workers
+  const wRes = await api('getWorkers', {});
+  if (wRes.success && wRes.workers) {
+    APP_DATA.workers = wRes.workers;
+    document.getElementById('stat-workers').textContent = wRes.workers.length;
+    renderDashboardWorkers(wRes.workers.slice(0, 4));
+  } else {
+    document.getElementById('stat-workers').textContent = '1';
+    // Use local demo data
+    APP_DATA.workers = [{ Worker_Unique_ID: 'TXT01', Worker_Name: 'Test Worker', Contractor_Name: 'Test Contractor', Status: 'Active', Induction_Date: '2026-03-18' }];
+    renderDashboardWorkers(APP_DATA.workers);
+  }
+
+  // Permits
+  const pRes = await api('getPermits', {});
+  if (pRes.success && pRes.permits) {
+    APP_DATA.permits = pRes.permits;
+    document.getElementById('stat-permits').textContent = pRes.permits.filter(p => !['Approved','Rejected'].includes(p.Current_Status)).length;
+    document.getElementById('stat-pending').textContent = pRes.permits.filter(p => p.Current_Status?.includes('Pending')).length;
+    renderDashboardPermits(pRes.permits.slice(0, 4));
+  } else {
+    document.getElementById('stat-permits').textContent = '0';
+    document.getElementById('stat-pending').textContent = '0';
+  }
+
+  document.getElementById('stat-contractors').textContent = APP_DATA.contractors.length || '—';
+}
+
+function renderDashboardWorkers(workers) {
+  const el = document.getElementById('dashboard-workers-list');
+  if (!workers.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👷</div><p>No workers inducted yet</p></div>';
+    return;
+  }
+  el.innerHTML = workers.map(w => `
+    <div class="worker-card" onclick="viewWorker('${w.Worker_Unique_ID}')">
+      <div class="worker-avatar">👷</div>
+      <div>
+        <div class="worker-id">${w.Worker_Unique_ID || '—'}</div>
+        <div class="worker-name">${w.Worker_Name || '—'}</div>
+        <div class="worker-meta">${w.Contractor_Name || '—'} &middot; ${w.Status || 'Active'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderDashboardPermits(permits) {
+  const el = document.getElementById('dashboard-permits-list');
+  if (!permits.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No permits created yet</p></div>';
+    return;
+  }
+  el.innerHTML = permits.map(p => `
+    <div class="permit-card" onclick="viewPermit('${p.Permit_ID}')">
+      <div class="permit-header">
+        <div class="permit-id">${p.Permit_ID || '—'}</div>
+        ${getBadge(p.Current_Status)}
+      </div>
+      <div class="permit-meta">
+        <span>📍 ${p.Area_Name || '—'}</span>
+        <span>🔧 ${p.Permit_Type || '—'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function getBadge(status) {
+  if (!status) return '<span class="badge badge-gray">Unknown</span>';
+  if (status === 'Approved') return `<span class="badge badge-green">${status}</span>`;
+  if (status === 'Rejected') return `<span class="badge badge-red">${status}</span>`;
+  if (status?.includes('Pending')) return `<span class="badge badge-orange">${status}</span>`;
+  return `<span class="badge badge-blue">${status}</span>`;
+}
+
+// ============================================================
+// WORKERS
+// ============================================================
+async function loadWorkers() {
+  const grid = document.getElementById('workers-grid');
+  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="spinner dark"></div></div>';
+
+  const res = await api('getWorkers', {});
+  if (res.success && res.workers) {
+    APP_DATA.workers = res.workers;
+  }
+  renderWorkers(APP_DATA.workers);
+}
+
+function renderWorkers(workers) {
+  const grid = document.getElementById('workers-grid');
+  if (!workers.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">👷</div><p>No workers found</p></div>';
+    return;
+  }
+  grid.innerHTML = workers.map(w => `
+    <div class="worker-card" onclick="viewWorker('${w.Worker_Unique_ID}')">
+      <div class="worker-avatar">
+        ${w.Photo_Drive_URL ? `<img src="${w.Photo_Drive_URL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.textContent='👷'">` : '👷'}
+      </div>
+      <div style="flex:1;">
+        <div class="worker-id">${w.Worker_Unique_ID || '—'}</div>
+        <div class="worker-name">${w.Worker_Name || '—'}</div>
+        <div class="worker-meta">${w.Contractor_Name || '—'}</div>
+        <div class="worker-meta">${w.Designation || ''}</div>
+        <div style="margin-top:6px;">
+          ${(w.Authorizations || '').split(',').filter(Boolean).map(t => `<span class="training-chip">${t.trim()}</span>`).join(' ')}
+        </div>
+      </div>
+      <div>${w.Status === 'Active' ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-gray">Inactive</span>'}</div>
+    </div>
+  `).join('');
+}
+
+function filterWorkers() {
+  const q = document.getElementById('worker-search').value.toLowerCase();
+  const status = document.getElementById('worker-status-filter').value;
+  const filtered = APP_DATA.workers.filter(w => {
+    const matchQ = !q || (w.Worker_Name || '').toLowerCase().includes(q) ||
+      (w.Worker_Unique_ID || '').toLowerCase().includes(q) ||
+      (w.Contractor_Name || '').toLowerCase().includes(q);
+    const matchS = !status || w.Status === status;
+    return matchQ && matchS;
+  });
+  renderWorkers(filtered);
+}
+
+function viewWorker(id) {
+  const w = APP_DATA.workers.find(x => x.Worker_Unique_ID === id);
+  if (!w) return;
+  const body = document.getElementById('worker-modal-body');
+  body.innerHTML = `
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="text-align:center;flex-shrink:0;">
+        ${w.Photo_Drive_URL
+          ? `<img src="${w.Photo_Drive_URL}" style="width:120px;height:120px;border-radius:16px;object-fit:cover;border:3px solid var(--g4);" onerror="this.outerHTML='<div style=width:120px;height:120px;border-radius:16px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:40px;>👷</div>'">`
+          : `<div style="width:120px;height:120px;border-radius:16px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:40px;">👷</div>`}
+        <div style="margin-top:8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--g1);">${w.Worker_Unique_ID}</div>
+        ${getBadge(w.Status)}
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:22px;font-weight:700;margin-bottom:4px;">${w.Worker_Name}</div>
+        <div style="color:var(--gray);margin-bottom:16px;">${w.Designation || '—'} &bull; ${w.Contractor_Name || '—'}</div>
+        <div class="grid-2" style="gap:12px;font-size:14px;">
+          <div><span style="color:var(--gray)">Blood Group:</span> <strong>${w.Blood_Group || '—'}</strong></div>
+          <div><span style="color:var(--gray)">Mobile:</span> <strong>${w.Mobile_Number || '—'}</strong></div>
+          <div><span style="color:var(--gray)">Aadhar:</span> <strong>${w.Aadhar_Number || '—'}</strong></div>
+          <div><span style="color:var(--gray)">Inducted:</span> <strong>${w.Induction_Date ? new Date(w.Induction_Date).toLocaleDateString() : '—'}</strong></div>
+        </div>
+        ${w.Address ? `<div style="margin-top:12px;font-size:14px;"><span style="color:var(--gray)">Address:</span> ${w.Address}</div>` : ''}
+        <div style="margin-top:16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Trainings</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${(w.Authorizations || 'None').split(',').filter(Boolean).map(t => `<span class="training-chip">✓ ${t.trim()}</span>`).join('') || '<span style="color:var(--gray);font-size:13px;">No trainings recorded</span>'}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('worker-detail-modal').classList.add('active');
+}
+
+// ============================================================
+// INDUCTION FORM
+// ============================================================
+async function startWebcam() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    webcamStream = stream;
+    const video = document.getElementById('webcam-capture');
+    video.srcObject = stream;
+    video.style.display = 'block';
+    document.getElementById('webcam-placeholder').style.display = 'none';
+    document.getElementById('capture-btn').style.display = 'flex';
+    document.getElementById('stop-btn').style.display = 'flex';
+    document.getElementById('webcam-controls').style.display = 'flex';
+  } catch (e) {
+    toast('Camera not available. Please upload a photo.', 'error');
+  }
+}
+
+function capturePhoto() {
+  const video = document.getElementById('webcam-capture');
+  const canvas = document.getElementById('webcam-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  capturedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.8);
+  const preview = document.getElementById('photo-preview');
+  preview.src = capturedPhotoBase64;
+  preview.style.display = 'block';
+  stopWebcam();
+  document.getElementById('retake-btn').style.display = 'flex';
+  toast('Photo captured!');
+}
+
+function retakePhoto() {
+  capturedPhotoBase64 = null;
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('retake-btn').style.display = 'none';
+  startWebcam();
+}
+
+function stopWebcam() {
+  if (webcamStream) { webcamStream.getTracks().forEach(t => t.stop()); webcamStream = null; }
+  document.getElementById('webcam-capture').style.display = 'none';
+  document.getElementById('capture-btn').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'none';
+  if (!capturedPhotoBase64) document.getElementById('webcam-placeholder').style.display = 'block';
+}
+
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    capturedPhotoBase64 = e.target.result;
+    const preview = document.getElementById('photo-preview');
+    preview.src = capturedPhotoBase64;
+    preview.style.display = 'block';
+    toast('Photo uploaded!');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitWorker() {
+  const name = document.getElementById('w-name').value.trim();
+  const contractor = document.getElementById('w-contractor').value.trim();
+  const mobile = document.getElementById('w-mobile').value.trim();
+
+  if (!name || !contractor || !mobile) {
+    toast('Name, Contractor and Mobile are required.', 'error'); return;
+  }
+  if (!/^\d{10}$/.test(mobile)) {
+    toast('Mobile must be 10 digits.', 'error'); return;
+  }
+
+  const trainings = Array.from(document.querySelectorAll('#page-induction input[type=checkbox]:checked'))
+    .map(cb => cb.value).join(',');
+
+  const btn = document.getElementById('submit-worker-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Submitting...';
+
+  const payload = {
+    worker_name: name,
+    contractor_name: contractor,
+    designation: document.getElementById('w-designation').value.trim(),
+    blood_group: document.getElementById('w-blood').value,
+    dob: document.getElementById('w-dob').value,
+    aadhar: document.getElementById('w-aadhar').value.trim(),
+    mobile: mobile,
+    address: document.getElementById('w-address').value.trim(),
+    trainings: trainings,
+    photo_base64: capturedPhotoBase64 || null
+  };
+
+  const res = await api('addWorker', payload);
+
+  btn.disabled = false;
+  btn.textContent = 'Submit Induction';
+
+  if (res.success) {
+    toast(`Worker inducted! ID: ${res.worker_id || 'Generated'}`, 'success');
+    clearInductionForm();
+    APP_DATA.workers = [];
+  } else {
+    toast(res.message || 'Induction failed. Check API.', 'error');
+  }
+}
+
+function clearInductionForm() {
+  ['w-name','w-contractor','w-designation','w-aadhar','w-mobile','w-address'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('w-blood').value = '';
+  document.getElementById('w-dob').value = '';
+  document.querySelectorAll('#page-induction input[type=checkbox]').forEach(cb => {
+    cb.checked = false;
+    cb.closest('.check-item')?.classList.remove('selected');
+  });
+  capturedPhotoBase64 = null;
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('photo-upload').value = '';
+  stopWebcam();
+  document.getElementById('webcam-placeholder').style.display = 'block';
+}
+
+// ============================================================
+// PERMITS
+// ============================================================
+async function loadPermits() {
+  document.getElementById('permits-list').innerHTML = '<div class="empty-state"><div class="spinner dark"></div></div>';
+  const res = await api('getPermits', {});
+  if (res.success && res.permits) APP_DATA.permits = res.permits;
+  renderPermits(APP_DATA.permits);
+}
+
+function renderPermits(permits) {
+  const el = document.getElementById('permits-list');
+  if (!permits.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No permits found</p></div>';
+    return;
+  }
+  el.innerHTML = permits.map(p => `
+    <div class="permit-card" onclick="viewPermit('${p.Permit_ID}')">
+      <div class="permit-header">
+        <div class="permit-id">${p.Permit_ID || '—'}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="permit-type-badge">${p.Permit_Type || '—'}</span>
+          ${getBadge(p.Current_Status)}
+        </div>
+      </div>
+      <div class="permit-meta">
+        <span>📍 ${p.Area_Name || '—'}</span>
+        <span>👤 ${p.Initiator_User_ID || '—'}</span>
+        <span>📅 ${p.Initiation_Timestamp ? new Date(p.Initiation_Timestamp).toLocaleDateString() : '—'}</span>
+        ${p.Tentative_Start_DateTime ? `<span>🕐 ${new Date(p.Tentative_Start_DateTime).toLocaleString()}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterPermits() {
+  const q = document.getElementById('permit-search').value.toLowerCase();
+  const type = document.getElementById('permit-type-filter').value;
+  const status = document.getElementById('permit-status-filter').value;
+  const filtered = APP_DATA.permits.filter(p => {
+    const matchQ = !q || (p.Permit_ID || '').toLowerCase().includes(q) || (p.Area_Name || '').toLowerCase().includes(q);
+    const matchT = !type || p.Permit_Type === type;
+    const matchS = !status || p.Current_Status === status;
+    return matchQ && matchT && matchS;
+  });
+  renderPermits(filtered);
+}
+
+function viewPermit(id) {
+  const p = APP_DATA.permits.find(x => x.Permit_ID === id);
+  if (!p) return;
+
+  document.getElementById('permit-modal-title').textContent = `Permit ${p.Permit_ID}`;
+  document.getElementById('permit-modal-sub').textContent = `${p.Permit_Type} — ${p.Area_Name}`;
+
+  const body = document.getElementById('permit-modal-body');
+  body.innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+      ${getBadge(p.Current_Status)}
+      <span class="permit-type-badge">${p.Permit_Type}</span>
+    </div>
+    <div class="grid-2" style="gap:12px;font-size:14px;margin-bottom:16px;">
+      <div><span style="color:var(--gray)">Area:</span> <strong>${p.Area_Name || '—'}</strong></div>
+      <div><span style="color:var(--gray)">Initiator:</span> <strong>${p.Initiator_User_ID || '—'}</strong></div>
+      <div><span style="color:var(--gray)">Supervisor:</span> <strong>${p.Supervisor_User_ID || '—'}</strong></div>
+      <div><span style="color:var(--gray)">Maintenance:</span> <strong>${p.Maintenance_Required || '—'}</strong></div>
+      <div><span style="color:var(--gray)">Date:</span> <strong>${p.Initiation_Timestamp ? new Date(p.Initiation_Timestamp).toLocaleDateString() : '—'}</strong></div>
+      <div><span style="color:var(--gray)">Start:</span> <strong>${p.Tentative_Start_DateTime ? new Date(p.Tentative_Start_DateTime).toLocaleString() : '—'}</strong></div>
+    </div>
+    ${p.Hazards_Selected ? `<div class="divider"></div><div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Hazards</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.Hazards_Selected.split(',').map(h=>`<span class="badge badge-orange">${h.trim()}</span>`).join('')}</div></div>` : ''}
+    ${p.PPE_Required ? `<div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">PPE Required</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.PPE_Required.split(',').map(h=>`<span class="badge badge-blue">${h.trim()}</span>`).join('')}</div></div>` : ''}
+    ${p.Assigned_Worker_IDs ? `<div><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Workers</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.Assigned_Worker_IDs.split(',').map(w=>`<span class="badge badge-green">${w.trim()}</span>`).join('')}</div></div>` : ''}
+  `;
+
+  // Footer action buttons based on role
+  const footer = document.getElementById('permit-modal-footer');
+  const role = SESSION.user?.Role;
+  const status = p.Current_Status;
+  let btns = '';
+  if (status === 'Pending HOD' && role === 'Area HOD') {
+    btns = `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>
+            <button class="btn btn-ghost" onclick="doApprove('${p.Permit_ID}','query')">❓ Raise Query</button>`;
+  } else if (status === 'Pending Safety' && role === 'Safety Officer') {
+    btns = `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>
+            <button class="btn btn-danger" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>`;
+  } else if (status === 'Pending Plant Head' && role === 'Plant Head') {
+    btns = `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Final Approve</button>
+            <button class="btn btn-danger" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>`;
+  }
+  footer.innerHTML = `<button class="btn btn-ghost" onclick="closeModal('permit-detail-modal')">Close</button>${btns}`;
+
+  document.getElementById('permit-detail-modal').classList.add('active');
+}
+
+async function doApprove(permitId, action) {
+  const comments = action === 'query' ? prompt('Enter your query / comments:') : '';
+  if (action === 'query' && !comments) return;
+
+  const res = await api('approvePermit', { permit_id: permitId, action, comments });
+  closeModal('permit-detail-modal');
+  if (res.success) {
+    toast(`Permit ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'queried'}!`);
+    loadPermits();
+  } else {
+    toast(res.message || 'Action failed. Check API.', 'error');
+  }
+}
+
+// ============================================================
+// CREATE PERMIT
+// ============================================================
+function onPermitTypeChange() {
+  const type = document.getElementById('p-type').value;
+  const sr = document.getElementById('special-roles-section');
+  const fw = document.getElementById('fire-watcher-group');
+  const en = document.getElementById('entrant-group');
+  const at = document.getElementById('attendant-group');
+
+  sr.style.display = type ? 'block' : 'none';
+  fw.style.display = type === 'Hot Work' ? 'block' : 'none';
+  en.style.display = type === 'Confined Space' ? 'block' : 'none';
+  at.style.display = type === 'Confined Space' ? 'block' : 'none';
+}
+
+function loadWorkerSelect() {
+  const list = document.getElementById('worker-select-list');
+  if (!APP_DATA.workers.length) {
+    api('getWorkers', {}).then(res => {
+      if (res.success && res.workers) APP_DATA.workers = res.workers;
+      renderWorkerSelect(APP_DATA.workers);
+    });
+  } else {
+    renderWorkerSelect(APP_DATA.workers);
+  }
+}
+
+function renderWorkerSelect(workers) {
+  const list = document.getElementById('worker-select-list');
+  if (!workers.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray);font-size:14px;">No workers available</div>';
+    return;
+  }
+  list.innerHTML = workers.map(w => `
+    <div class="worker-select-item ${selectedWorkers.includes(w.Worker_Unique_ID) ? 'selected' : ''}"
+         onclick="toggleWorkerSelect('${w.Worker_Unique_ID}', '${w.Worker_Name}', this)">
+      <input type="checkbox" ${selectedWorkers.includes(w.Worker_Unique_ID) ? 'checked' : ''} onclick="event.stopPropagation()">
+      <div>
+        <div style="font-weight:600;font-size:14px;">${w.Worker_Name}</div>
+        <div style="font-size:12px;color:var(--gray);">${w.Worker_Unique_ID} &bull; ${w.Contractor_Name || '—'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleWorkerSelect(id, name, el) {
+  if (selectedWorkers.includes(id)) {
+    selectedWorkers = selectedWorkers.filter(x => x !== id);
+    el.classList.remove('selected');
+    el.querySelector('input').checked = false;
+  } else {
+    selectedWorkers.push(id);
+    el.classList.add('selected');
+    el.querySelector('input').checked = true;
+  }
+  updateSelectedWorkersDisplay();
+}
+
+function updateSelectedWorkersDisplay() {
+  const disp = document.getElementById('selected-workers-display');
+  if (!selectedWorkers.length) { disp.innerHTML = ''; return; }
+  disp.innerHTML = selectedWorkers.map(id => {
+    const w = APP_DATA.workers.find(x => x.Worker_Unique_ID === id);
+    return `<span class="badge badge-green" style="cursor:pointer;" onclick="toggleWorkerSelect('${id}', '', document.querySelector('[onclick*=\\'${id}\\']')?.closest('.worker-select-item'))">
+      ${w?.Worker_Name || id} ✕
+    </span>`;
+  }).join('');
+}
+
+function filterWorkerSelect() {
+  const q = document.getElementById('worker-select-search').value.toLowerCase();
+  const cf = document.getElementById('worker-contractor-filter').value.toLowerCase();
+  const filtered = APP_DATA.workers.filter(w => {
+    const matchQ = !q || (w.Worker_Name || '').toLowerCase().includes(q) || (w.Worker_Unique_ID || '').toLowerCase().includes(q);
+    const matchC = !cf || (w.Contractor_Name || '').toLowerCase().includes(cf);
+    return matchQ && matchC;
+  });
+  renderWorkerSelect(filtered);
+}
+
+async function submitPermit() {
+  const type = document.getElementById('p-type').value;
+  const area = document.getElementById('p-area').value.trim();
+  if (!type || !area) { toast('Permit type and area are required.', 'error'); return; }
+
+  const hazards = Array.from(document.querySelectorAll('#hazards-grid input:checked')).map(c => c.value);
+  const ppe = Array.from(document.querySelectorAll('#page-create-permit .card:nth-child(2) input:checked')).map(c => c.value);
+
+  const specialRoles = {};
+  if (type === 'Hot Work') specialRoles.fire_watcher = document.getElementById('p-fire-watcher').value;
+  if (type === 'Confined Space') {
+    specialRoles.entrant = document.getElementById('p-entrant').value;
+    specialRoles.attendant = document.getElementById('p-attendant').value;
+  }
+
+  const btn = document.getElementById('submit-permit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Submitting...';
+
+  const payload = {
+    permit_type: type,
+    area_name: area,
+    hazards: hazards.join(','),
+    ppe_required: ppe.join(','),
+    supervisor: document.getElementById('p-supervisor').value.trim(),
+    tentative_start: document.getElementById('p-startdate').value,
+    maintenance_required: document.getElementById('p-maintenance').value,
+    assigned_workers: selectedWorkers.join(','),
+    special_roles: JSON.stringify(specialRoles)
+  };
+
+  const res = await api('createPermit', payload);
+  btn.disabled = false;
+  btn.textContent = 'Submit Permit';
+
+  if (res.success) {
+    toast(`Permit created! ID: ${res.permit_id || 'Generated'}`, 'success');
+    clearPermitForm();
+    APP_DATA.permits = [];
+  } else {
+    toast(res.message || 'Permit creation failed. Check API.', 'error');
+  }
+}
+
+function clearPermitForm() {
+  document.getElementById('p-type').value = '';
+  document.getElementById('p-area').value = '';
+  document.getElementById('p-supervisor').value = '';
+  document.getElementById('p-startdate').value = '';
+  document.getElementById('p-maintenance').value = 'No';
+  document.querySelectorAll('#page-create-permit input[type=checkbox]').forEach(cb => {
+    cb.checked = false;
+    cb.closest('.check-item')?.classList.remove('selected');
+  });
+  selectedWorkers = [];
+  updateSelectedWorkersDisplay();
+  onPermitTypeChange();
+}
+
+// ============================================================
+// APPROVALS
+// ============================================================
+async function loadApprovals() {
+  const el = document.getElementById('approvals-list');
+  el.innerHTML = '<div class="empty-state"><div class="spinner dark"></div></div>';
+
+  const res = await api('getPermits', { for_approval: true });
+  const permits = (res.success && res.permits) ? res.permits : APP_DATA.permits;
+
+  const role = SESSION.user?.Role;
+  const statusMap = {
+    'Area HOD': 'Pending HOD',
+    'Safety Officer': 'Pending Safety',
+    'Plant Head': 'Pending Plant Head',
+    'Contractor Supervisor': 'Pending Contractor',
+    'Maintenance Lead': 'Pending Contractor'
+  };
+  const myStatus = statusMap[role];
+  const myPermits = permits.filter(p => !myStatus || p.Current_Status === myStatus);
+
+  if (!myPermits.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>No permits require your action</p></div>';
+    return;
+  }
+
+  el.innerHTML = myPermits.map(p => `
+    <div class="permit-card">
+      <div class="permit-header">
+        <div class="permit-id">${p.Permit_ID}</div>
+        ${getBadge(p.Current_Status)}
+      </div>
+      <div class="permit-meta" style="margin-bottom:12px;">
+        <span>🔧 ${p.Permit_Type}</span>
+        <span>📍 ${p.Area_Name}</span>
+        <span>📅 ${p.Initiation_Timestamp ? new Date(p.Initiation_Timestamp).toLocaleDateString() : '—'}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewPermit('${p.Permit_ID}')">👁 View Details</button>
+        <button class="btn btn-ghost btn-sm" onclick="doApprove('${p.Permit_ID}','query')">❓ Query</button>
+        ${role === 'Safety Officer' || role === 'Plant Head' ? `<button class="btn btn-danger btn-sm" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+async function loadAdminUsers() {
+  const res = await api('getWorkers', { type: 'users' });
+  const tbody = document.getElementById('admin-users-table');
+  // Show local session user as demo
+  tbody.innerHTML = `
+    <tr>
+      <td><strong>${SESSION.user?.User_ID}</strong></td>
+      <td>${SESSION.user?.Full_Name}</td>
+      <td><span class="badge badge-green">${SESSION.user?.Role}</span></td>
+      <td>${SESSION.user?.Email_Address || '—'}</td>
+      <td><span class="badge badge-green">Active</span></td>
+      <td><button class="btn btn-ghost btn-sm" disabled>Edit</button></td>
+    </tr>
+  `;
+}
+
+function openAddUserModal() {
+  document.getElementById('add-user-modal').classList.add('active');
+}
+
+async function submitAddUser() {
+  const id = document.getElementById('nu-id').value.trim();
+  const name = document.getElementById('nu-name').value.trim();
+  const role = document.getElementById('nu-role').value;
+  const email = document.getElementById('nu-email').value.trim();
+  const phone = document.getElementById('nu-phone').value.trim();
+  const pwd = document.getElementById('nu-pwd').value;
+
+  if (!id || !name || !role || !pwd) { toast('Fill all required fields.', 'error'); return; }
+
+  const res = await api('adminAssignRole', { user_id: id, name, role, email, phone, password: pwd });
+  if (res.success) {
+    closeModal('add-user-modal');
+    toast('User added successfully!');
+    loadAdminUsers();
+  } else {
+    toast(res.message || 'Failed to add user.', 'error');
+  }
+}
+
+function openAddContractorModal() {
+  document.getElementById('add-contractor-modal').classList.add('active');
+}
+
+async function submitAddContractor() {
+  const name = document.getElementById('nc-name').value.trim();
+  const contact = document.getElementById('nc-contact').value.trim();
+  const phone = document.getElementById('nc-phone').value.trim();
+
+  if (!name) { toast('Company name required.', 'error'); return; }
+
+  const res = await api('getContractors', { action_add: true, company: name, contact, phone });
+  if (res.success) {
+    closeModal('add-contractor-modal');
+    toast('Contractor added!');
+  } else {
+    toast(res.message || 'Failed. Check API.', 'error');
+  }
+}
+
+// Click outside to close modals
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>
