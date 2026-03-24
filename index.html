@@ -1398,7 +1398,18 @@ async function submitChangePassword() {
 // ============================================================
 // LAUNCH APP
 // ============================================================
-function launchApp() {
+// Role permissions map
+const ROLE_PERMISSIONS = {
+  'EHS Lead':              { canInduct:true,  canCreatePermit:true,  canApprove:true,  canAdmin:true,  trainings:['General','Hot','Height','Confined Space','Excavation','Heavy Lifting'] },
+  'Safety Officer':        { canInduct:true,  canCreatePermit:false, canApprove:true,  canAdmin:false, trainings:['General','Hot','Height','Confined Space','Excavation','Heavy Lifting'] },
+  'Area Incharge':         { canInduct:false, canCreatePermit:true,  canApprove:false, canAdmin:false, trainings:['General'] },
+  'Area HOD':              { canInduct:false, canCreatePermit:false, canApprove:true,  canAdmin:false, trainings:['General'] },
+  'Plant Head':            { canInduct:false, canCreatePermit:false, canApprove:true,  canAdmin:false, trainings:['General'] },
+  'Contractor Supervisor': { canInduct:true,  canCreatePermit:false, canApprove:true,  canAdmin:false, trainings:['General','Hot','Height','Confined Space','Excavation','Heavy Lifting'] },
+  'Maintenance Lead':      { canInduct:false, canCreatePermit:true,  canApprove:true,  canAdmin:false, trainings:['General','Hot','Height'] },
+};
+
+async function launchApp() {
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('app').style.display = 'block';
 
@@ -1408,12 +1419,59 @@ function launchApp() {
   document.getElementById('sidebar-role').textContent = u.Role || 'User';
   document.getElementById('topbar-user').textContent = u.Full_Name || '';
 
-  // Show admin nav for EHS Lead / Admin
-  if (['EHS Lead', 'Admin'].includes(u.Role)) {
-    document.getElementById('admin-nav').style.display = 'block';
-  }
+  applyRoleBasedUI(u.Role);
 
+  // Show loading overlay while fetching persisted data
+  const overlay = document.createElement('div');
+  overlay.id = 'data-loading';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(13,31,13,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+  overlay.innerHTML = '<div class="spinner" style="width:40px;height:40px;border-width:3px;"></div><div style="color:var(--g5);font-size:14px;letter-spacing:2px;text-transform:uppercase;">Loading your data...</div>';
+  document.body.appendChild(overlay);
+
+  // ── Load persisted data from backend ──
+  const [wRes, pRes] = await Promise.all([
+    api('getWorkers', {}),
+    api('getPermits', {})
+  ]);
+  if (wRes.success && wRes.workers) APP_DATA.workers = wRes.workers;
+  if (pRes.success && pRes.permits) APP_DATA.permits = pRes.permits;
+
+  overlay.remove();
   loadDashboardData();
+}
+
+function applyRoleBasedUI(role) {
+  const perms = ROLE_PERMISSIONS[role] || { canInduct:false, canCreatePermit:false, canApprove:false, canAdmin:false, trainings:['General'] };
+
+  // Nav items
+  const navInduction    = document.querySelector('[onclick*="induction"]');
+  const navWorkers      = document.querySelector('[onclick*="'workers'"]');
+  const navCreatePermit = document.getElementById('nav-create-permit');
+  const navApprovals    = document.getElementById('nav-my-approvals');
+  const navAdmin        = document.getElementById('admin-nav');
+
+  if (navInduction)    navInduction.style.display    = perms.canInduct        ? '' : 'none';
+  if (navWorkers)      navWorkers.style.display       = (perms.canInduct || perms.canAdmin) ? '' : 'none';
+  if (navCreatePermit) navCreatePermit.style.display  = perms.canCreatePermit ? '' : 'none';
+  if (navApprovals)    navApprovals.style.display     = perms.canApprove      ? '' : 'none';
+  if (navAdmin)        navAdmin.style.display         = perms.canAdmin        ? 'block' : 'none';
+
+  // Training checkboxes — show only what this role can authorise
+  const trainingMap = {
+    'General':       'tr-general',
+    'Hot':           'tr-hot',
+    'Height':        'tr-height',
+    'Confined Space':'tr-confined',
+    'Excavation':    'tr-excavation',
+    'Heavy Lifting': 'tr-lifting'
+  };
+  Object.entries(trainingMap).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const wrap = el.closest('.check-item');
+      if (wrap) wrap.style.display = perms.trainings.includes(key) ? '' : 'none';
+    }
+  });
 }
 
 function handleLogout() {
@@ -1456,11 +1514,10 @@ function closeModal(id) {
 // ============================================================
 // DASHBOARD
 // ============================================================
-async function loadDashboardData() {
-  // Backend has no read endpoints — show locally cached session data
-  document.getElementById('stat-workers').textContent = APP_DATA.workers.length || '0';
-  document.getElementById('stat-permits').textContent = APP_DATA.permits.filter(p => !['Approved','Rejected'].includes(p.Current_Status)).length || '0';
-  document.getElementById('stat-pending').textContent = APP_DATA.permits.filter(p => (p.Current_Status||'').includes('Pending')).length || '0';
+function loadDashboardData() {
+  document.getElementById('stat-workers').textContent = APP_DATA.workers.length;
+  document.getElementById('stat-permits').textContent = APP_DATA.permits.filter(p => !['Approved','Rejected'].includes(p.Current_Status)).length;
+  document.getElementById('stat-pending').textContent = APP_DATA.permits.filter(p => (p.Current_Status||'').includes('Pending')).length;
   document.getElementById('stat-contractors').textContent = APP_DATA.contractors.length || '0';
   renderDashboardWorkers(APP_DATA.workers.slice(-4).reverse());
   renderDashboardPermits(APP_DATA.permits.slice(-4).reverse());
@@ -1518,8 +1575,9 @@ function getBadge(status) {
 async function loadWorkers() {
   const grid = document.getElementById('workers-grid');
   grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="spinner dark"></div></div>';
-  // Backend has no getWorkers endpoint — display locally cached workers
-  setTimeout(() => renderWorkers(APP_DATA.workers), 300);
+  const res = await api('getWorkers', {});
+  if (res.success && res.workers) APP_DATA.workers = res.workers;
+  renderWorkers(APP_DATA.workers);
 }
 
 function renderWorkers(workers) {
@@ -1753,7 +1811,9 @@ function clearInductionForm() {
 // ============================================================
 async function loadPermits() {
   document.getElementById('permits-list').innerHTML = '<div class="empty-state"><div class="spinner dark"></div></div>';
-  setTimeout(() => renderPermits(APP_DATA.permits), 300);
+  const res = await api('getPermits', {});
+  if (res.success && res.permits) APP_DATA.permits = res.permits;
+  renderPermits(APP_DATA.permits);
 }
 
 function renderPermits(permits) {
@@ -1844,15 +1904,13 @@ async function doApprove(permitId, action) {
   const comments = action === 'query' ? prompt('Enter your query / comments:') : '';
   if (action === 'query' && !comments) return;
 
-  // Update local cache status immediately
-  const permit = APP_DATA.permits.find(p => p.Permit_ID === permitId);
-  if (permit) {
-    if (action === 'approve') permit.Current_Status = 'Approved';
-    else if (action === 'reject') permit.Current_Status = 'Rejected';
-    else if (action === 'query') permit.Current_Status = 'Queried';
-  }
+  const res = await api('approvePermit', { permitId, approvalAction: action, comments, userId: SESSION.user.User_ID });
   closeModal('permit-detail-modal');
-  toast(`Permit ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'queried'} locally. Add approvePermit to backend to persist.`, 'success');
+  if (res.success) {
+    toast(`Permit ${action === 'approve' ? 'Approved ✅' : action === 'reject' ? 'Rejected ❌' : 'Queried ❓'}`, 'success');
+  } else {
+    toast(res.message || 'Action failed.', 'error');
+  }
   loadPermits();
 }
 
@@ -1872,7 +1930,9 @@ function onPermitTypeChange() {
   at.style.display = type === 'Confined Space' ? 'block' : 'none';
 }
 
-function loadWorkerSelect() {
+async function loadWorkerSelect() {
+  const res = await api('getWorkers', {});
+  if (res.success && res.workers) APP_DATA.workers = res.workers;
   renderWorkerSelect(APP_DATA.workers);
 }
 
@@ -2022,7 +2082,8 @@ async function loadApprovals() {
   const el = document.getElementById('approvals-list');
   el.innerHTML = '<div class="empty-state"><div class="spinner dark"></div></div>';
 
-  // Use locally cached permits (no getPermits endpoint in backend)
+  const pRes = await api('getPermits', {});
+  if (pRes.success && pRes.permits) APP_DATA.permits = pRes.permits;
   const permits = APP_DATA.permits;
 
   const role = SESSION.user?.Role;
@@ -2067,17 +2128,19 @@ async function loadApprovals() {
 // ============================================================
 async function loadAdminUsers() {
   const tbody = document.getElementById('admin-users-table');
-  // No read endpoint in backend — show current session user
-  tbody.innerHTML = `
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><div class="spinner dark" style="margin:auto;"></div></td></tr>';
+  // getUsers not in backend yet — show session user + any newly added this session
+  const rows = [SESSION.user, ...APP_DATA.users.filter(u => u.User_ID !== SESSION.user?.User_ID)];
+  tbody.innerHTML = rows.map(u => `
     <tr>
-      <td><strong>${SESSION.user?.User_ID}</strong></td>
-      <td>${SESSION.user?.Full_Name}</td>
-      <td><span class="badge badge-green">${SESSION.user?.Role}</span></td>
-      <td>${SESSION.user?.Email_Address || '—'}</td>
+      <td><strong>${u.User_ID || u.id || '—'}</strong></td>
+      <td>${u.Full_Name || u.name || '—'}</td>
+      <td><span class="badge badge-green">${u.Role || u.role || '—'}</span></td>
+      <td>${u.Email_Address || u.email || '—'}</td>
       <td><span class="badge badge-green">Active</span></td>
       <td><button class="btn btn-ghost btn-sm" disabled>Edit</button></td>
     </tr>
-  `;
+  `).join('');
 }
 
 function openAddUserModal() {
@@ -2097,7 +2160,11 @@ async function submitAddUser() {
   // Backend expects: { action: 'addEmployee', employeeData: {...} }
   const res = await api('addEmployee', { employeeData: { id, name, role, email, phone, password: pwd } });
   if (res.success) {
+    APP_DATA.users.push({ User_ID: id, Full_Name: name, Role: role, Email_Address: email });
     closeModal('add-user-modal');
+    // Clear fields
+    ['nu-id','nu-name','nu-email','nu-phone','nu-pwd'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
+    document.getElementById('nu-role').value = '';
     toast(res.message || 'User added successfully!');
     loadAdminUsers();
   } else {
