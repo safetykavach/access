@@ -579,7 +579,7 @@
   .worker-select-item:hover { background: var(--g4); }
   .worker-select-item.selected { background: #E8F5E9; }
   .worker-select-item input[type=checkbox] { accent-color: var(--g1); }
-
+@media (min-width: 769px) { .hide-on-desktop { display: none !important; } }
   /* Breadcrumb */
   .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gray); margin-bottom: 20px; }
   .breadcrumb .sep { color: var(--border); }
@@ -870,20 +870,72 @@
 
         <!-- Worker Details -->
         <div class="card">
-          <div class="card-header"><div class="card-title">📋 Worker Details</div></div>
+          <div class="card-header"><div class="card-title">📋 Worker / Employee Details</div></div>
           <div class="form-group light">
-            <label class="form-label">Worker Name *</label>
+            <label class="form-label">Worker / Employee Name *</label>
             <input type="text" id="w-name" class="form-input" placeholder="Full name">
           </div>
+          
           <div class="grid-2">
             <div class="form-group light">
+              <label class="form-label">Employee Type *</label>
+              <select id="w-emp-type" class="form-select" onchange="onEmpTypeChange()">
+                <option value="Contractor Worker">Contractor Worker</option>
+                <option value="3P Worker">3P Worker (Third Party)</option>
+                <option value="Onroll">Company Onroll</option>
+              </select>
+            </div>
+            
+            <div class="form-group light" id="contractor-group">
               <label class="form-label">Contractor Name *</label>
-              <input type="text" id="w-contractor" class="form-input" placeholder="Contractor firm">
+              <select id="w-contractor" class="form-select" onchange="if(this.value==='OTHER') openAddContractorModal()">
+                <option value="">Select Contractor...</option>
+                </select>
             </div>
-            <div class="form-group light">
-              <label class="form-label">Designation</label>
-              <input type="text" id="w-designation" class="form-input" placeholder="e.g. Welder, Helper">
+          </div>
+
+          <div class="form-group light" id="supervisor-checkbox-group" style="display:block; margin-top:-10px; margin-bottom:15px;">
+            <label class="check-item" style="border:none; padding:0; background:transparent;" onclick="const cb=document.getElementById('w-is-supervisor'); cb.checked=!cb.checked; toggleSystemAccessFields(); event.stopPropagation();">
+              <input type="checkbox" id="w-is-supervisor" onclick="event.stopPropagation(); toggleSystemAccessFields();">
+              <label style="color:var(--g2); font-weight:700;">Grant System Access (Make Contractor Supervisor)</label>
+            </label>
+          </div>
+
+          <div id="system-access-group" style="display:none; background:var(--g4); padding:16px; border-radius:10px; margin-bottom:16px; border:1px solid var(--border);">
+            <div style="font-size:13px; font-weight:700; color:var(--g2); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">System Access (User Account)</div>
+            <div class="grid-2">
+              <div class="form-group light">
+                <label class="form-label">Login ID (User ID) *</label>
+                <input type="text" id="w-sys-id" class="form-input" placeholder="e.g. EMP1234">
+              </div>
+              <div class="form-group light" id="w-sys-role-group">
+                <label class="form-label">System Role *</label>
+                <select id="w-sys-role" class="form-select">
+                  <option value="">Select Role</option>
+                  <option>EHS Lead</option>
+                  <option>Safety Officer</option>
+                  <option>Area Incharge</option>
+                  <option>Area HOD</option>
+                  <option>Plant Head</option>
+                  <option>Maintenance Lead</option>
+                </select>
+              </div>
             </div>
+            <div class="grid-2">
+              <div class="form-group light">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="w-sys-email" class="form-input" placeholder="email@company.com">
+              </div>
+              <div class="form-group light">
+                <label class="form-label">Initial Password *</label>
+                <input type="password" id="w-sys-pwd" class="form-input" placeholder="Temporary password">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group light">
+            <label class="form-label">Designation / Profile</label>
+            <input type="text" id="w-designation" class="form-input" placeholder="e.g. Welder, Helper, Executive">
           </div>
           <div class="grid-2">
             <div class="form-group light">
@@ -1005,11 +1057,11 @@
               <label class="form-label">Permit Type *</label>
               <select id="p-type" class="form-select" onchange="onPermitTypeChange()">
                 <option value="">Select permit type</option>
-                <option>Hot Work</option>
-                <option>Height Work</option>
-                <option>Confined Space</option>
-                <option>Cold Work</option>
-                <option>Excavation</option>
+                <option value="General Work Permit">General Work Permit</option>
+                <option value="Hot Work">Hot Work</option>
+                <option value="Height Work">Height Work</option>
+                <option value="Confined Space">Confined Space</option>
+                <option value="Excavation">Excavation</option>
               </select>
             </div>
             <div class="form-group light">
@@ -1035,6 +1087,25 @@
             </div>
 
             <!-- Special roles shown based on type -->
+            <div id="general-permit-section" style="display:none;">
+              <div class="divider"></div>
+              <div style="font-size:14px; font-weight:700; color:var(--g2); margin-bottom:12px;">General Permit Details</div>
+              <div class="form-group light">
+                <label class="form-label">Tools & Tackles Required</label>
+                <input type="text" id="p-tools" class="form-input" placeholder="e.g. Welding machine, grinder, scaffolding...">
+              </div>
+              <div class="grid-2">
+                <div class="form-group light">
+                  <label class="form-label">Tools Inspected?</label>
+                  <select id="p-tools-inspected" class="form-select"><option value="Yes">Yes</option><option value="No">No</option></select>
+                </div>
+                <div class="form-group light">
+                  <label class="form-label">Plant Modification?</label>
+                  <select id="p-plant-mod" class="form-select"><option value="No">No</option><option value="Yes">Yes</option></select>
+                </div>
+              </div>
+            </div>
+
             <div id="special-roles-section" style="display:none;">
               <div class="divider"></div>
               <div class="form-group light" id="fire-watcher-group" style="display:none;">
@@ -1262,6 +1333,16 @@
 
 <script>
 // ============================================================
+// IMAGE HELPER
+// ============================================================
+function getPhotoUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('data:image')) return url; // Works for local webcams immediately
+  const match = url.match(/[-\w]{25,}/); // Extracts the Google Drive ID
+  if (match) return `https://drive.google.com/uc?export=view&id=${match[0]}`;
+  return url;
+}
+// ============================================================
 // CONFIG — action names match Code.gs exactly
 // ============================================================
 const API_URL = 'https://script.google.com/macros/s/AKfycbwe6vuvTNSC5TL_pW4Vhu8L4p7y8qNKmzsITiNJPBS4XKNZL5zg-Js2FEM0lU9jGWynZA/exec';
@@ -1428,15 +1509,18 @@ async function launchApp() {
   overlay.innerHTML = '<div class="spinner" style="width:40px;height:40px;border-width:3px;"></div><div style="color:var(--g5);font-size:14px;letter-spacing:2px;text-transform:uppercase;">Loading your data...</div>';
   document.body.appendChild(overlay);
 
-  // ── Load persisted data from backend ──
-  const [wRes, pRes] = await Promise.all([
+ // ── Load persisted data from backend ──
+  const [wRes, pRes, cRes] = await Promise.all([
     api('getWorkers', {}),
-    api('getPermits', {})
+    api('getPermits', {}),
+    api('getContractors', {})
   ]);
   if (wRes.success && wRes.workers) APP_DATA.workers = wRes.workers;
   if (pRes.success && pRes.permits) APP_DATA.permits = pRes.permits;
-
+  if (cRes.success && cRes.contractors) APP_DATA.contractors = cRes.contractors;
   overlay.remove();
+
+populateContractorDropdown();
   loadDashboardData();
 }
 
@@ -1445,7 +1529,7 @@ function applyRoleBasedUI(role) {
 
   // Nav items
   const navInduction    = document.querySelector('[onclick*="induction"]');
-  const navWorkers      = document.querySelector('[onclick*="'workers'"]');
+  const navWorkers      = document.querySelector('[onclick*="workers"]');
   const navCreatePermit = document.getElementById('nav-create-permit');
   const navApprovals    = document.getElementById('nav-my-approvals');
   const navAdmin        = document.getElementById('admin-nav');
@@ -1618,6 +1702,46 @@ function filterWorkers() {
   renderWorkers(filtered);
 }
 
+function printWorkerCard(id) {
+  const w = APP_DATA.workers.find(x => x.Worker_Unique_ID === id);
+  if(!w) return;
+  const printWindow = window.open('', '_blank', 'width=400,height=600');
+  printWindow.document.write(`
+    <html><head><title>Print ID - ${w.Worker_Name}</title>
+    <style>
+      body { font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
+      .card { border: 2px solid #1B5E20; border-radius: 12px; width: 220px; text-align: center; padding: 20px 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+      .header { font-size: 16px; font-weight: bold; color: #1B5E20; margin-bottom: 15px; border-bottom: 2px solid #1B5E20; padding-bottom: 10px; }
+      .photo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #00C853; margin-bottom: 15px; }
+      .name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+      .desig { font-size: 12px; color: #555; margin-bottom: 10px; }
+      .id-box { background: #E8F5E9; color: #1B5E20; padding: 5px; border-radius: 4px; font-weight: bold; margin-bottom: 10px; }
+      .footer { font-size: 10px; color: #777; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; }
+    </style>
+    </head><body>
+      <div class="card">
+        <div class="header">DHANUKA AGRITECH</div>
+        <img class="photo" src="${getPhotoUrl(w.Photo_Drive_URL) || 'https://via.placeholder.com/100'}" onerror="this.outerHTML='<div style=font-size:60px;margin-bottom:15px;>👷</div>'">
+        <div class="name">${w.Worker_Name}</div>
+        <div class="desig">${w.Designation || 'Worker'} | B.G: ${w.Blood_Group || 'N/A'}</div>
+        <div class="id-box">ID: ${w.Worker_Unique_ID}</div>
+        <div style="font-size:11px; margin-bottom: 5px;"><strong>Employed by:</strong><br>${w.Contractor_Name || 'Dhanuka Onroll'}</div>
+        <div class="footer">Valid for site entry only.</div>
+      </div>
+      <script>
+        window.onload = function() { 
+          // Wait half a second for the image to finish loading before popping up the print dialog
+          setTimeout(function() { 
+            window.print(); 
+            setTimeout(function(){ window.close(); }, 500); 
+          }, 500); 
+        }
+      <\/script>
+    </body></html>
+  `);
+  printWindow.document.close();
+}
+
 function viewWorker(id) {
   const w = APP_DATA.workers.find(x => x.Worker_Unique_ID === id);
   if (!w) return;
@@ -1626,7 +1750,7 @@ function viewWorker(id) {
     <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
       <div style="text-align:center;flex-shrink:0;">
         ${w.Photo_Drive_URL
-          ? `<img src="${w.Photo_Drive_URL}" style="width:120px;height:120px;border-radius:16px;object-fit:cover;border:3px solid var(--g4);" onerror="this.outerHTML='<div style=width:120px;height:120px;border-radius:16px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:40px;>👷</div>'">`
+          ? `<img src="${getPhotoUrl(w.Photo_Drive_URL)}" style="width:120px;height:120px;border-radius:16px;object-fit:cover;border:3px solid var(--g4);" onerror="this.outerHTML='<div style=width:120px;height:120px;border-radius:16px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:40px;>👷</div>'">`
           : `<div style="width:120px;height:120px;border-radius:16px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:40px;">👷</div>`}
         <div style="margin-top:8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--g1);">${w.Worker_Unique_ID}</div>
         ${getBadge(w.Status)}
@@ -1647,6 +1771,11 @@ function viewWorker(id) {
             ${(w.Authorizations || 'None').split(',').filter(Boolean).map(t => `<span class="training-chip">✓ ${t.trim()}</span>`).join('') || '<span style="color:var(--gray);font-size:13px;">No trainings recorded</span>'}
           </div>
         </div>
+        
+        <div style="margin-top:24px; border-top:1px solid var(--border); padding-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="printWorkerCard('${w.Worker_Unique_ID}')">🖨️ Print ID Card</button>
+        </div>
+
       </div>
     </div>
   `;
@@ -1718,92 +1847,152 @@ function handlePhotoUpload(event) {
 
 async function submitWorker() {
   const name = document.getElementById('w-name').value.trim();
-  const contractor = document.getElementById('w-contractor').value.trim();
+  const empType = document.getElementById('w-emp-type').value;
+  let contractor = document.getElementById('w-contractor').value;
   const mobile = document.getElementById('w-mobile').value.trim();
 
-  if (!name || !contractor || !mobile) {
-    toast('Name, Contractor and Mobile are required.', 'error'); return;
-  }
-  if (!/^\d{10}$/.test(mobile)) {
-    toast('Mobile must be 10 digits.', 'error'); return;
+  // 1. Check if System Account is needed
+  const isSup = document.getElementById('w-is-supervisor').checked;
+  const needsAccount = (empType === 'Onroll') || (empType === 'Contractor Worker' && isSup);
+
+  let sysId = '', sysRole = '', sysEmail = '', sysPwd = '';
+  if (needsAccount) {
+    sysId = document.getElementById('w-sys-id').value.trim();
+    sysEmail = document.getElementById('w-sys-email').value.trim();
+    sysPwd = document.getElementById('w-sys-pwd').value;
+    sysRole = (empType === 'Onroll') ? document.getElementById('w-sys-role').value : 'Contractor Supervisor';
+
+    if (!sysId || !sysPwd || !sysRole) return toast('User ID, Role, and Password are required for system access.', 'error');
+    if (APP_DATA.users && APP_DATA.users.some(u => u.User_ID.toString() === sysId.toString())) {
+      return toast('This Login ID already exists in the system.', 'error');
+    }
   }
 
-  const trainings = Array.from(document.querySelectorAll('#page-induction input[type=checkbox]:checked'))
-    .map(cb => cb.value).join(',');
+  // 2. Validate Worker Details
+  if (empType === 'Onroll') contractor = 'Dhanuka Agritech (Onroll)';
+  else if (empType === '3P Worker') contractor = '3P Worker (Direct)';
+  else if (!contractor || contractor === 'OTHER') return toast('Please select a valid contractor.', 'error');
+  
+  if (!name || !mobile) return toast('Name and Mobile are required.', 'error');
+  if (!/^\d{10}$/.test(mobile)) return toast('Mobile must be 10 digits.', 'error');
+
+  const rawDesig = document.getElementById('w-designation').value.trim();
+  const finalDesignation = `[${empType}] ${rawDesig}`;
+  const trainings = Array.from(document.querySelectorAll('#page-induction input[type=checkbox]:checked')).map(cb => cb.value).join(',');
 
   const btn = document.getElementById('submit-worker-btn');
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div> Submitting...';
 
-  const payload = {
-    worker_name: name,
-    contractor_name: contractor,
-    designation: document.getElementById('w-designation').value.trim(),
-    blood_group: document.getElementById('w-blood').value,
-    dob: document.getElementById('w-dob').value,
-    aadhar: document.getElementById('w-aadhar').value.trim(),
-    mobile: mobile,
-    address: document.getElementById('w-address').value.trim(),
-    trainings: trainings,
-    photo_base64: capturedPhotoBase64 || null
-  };
-
-  // Backend expects: { action: 'induction', formData: {...} }
+  // 3. Create the Worker Profile
   const res = await api('induction', { formData: {
-    name: payload.worker_name,
-    contractor: payload.contractor_name,
-    designation: payload.designation,
-    bloodGroup: payload.blood_group,
-    dob: payload.dob,
-    aadhar: payload.aadhar,
-    mobile: payload.mobile,
-    address: payload.address,
-    authorizations: payload.trainings,
-    photo: payload.photo_base64
+    name: name, contractor: contractor, designation: finalDesignation,
+    bloodGroup: document.getElementById('w-blood').value, dob: document.getElementById('w-dob').value,
+    aadhar: document.getElementById('w-aadhar').value.trim(), mobile: mobile,
+    address: document.getElementById('w-address').value.trim(), authorizations: trainings, photo: capturedPhotoBase64 || null
   }});
-
-  btn.disabled = false;
-  btn.textContent = 'Submit Induction';
 
   if (res.success) {
     const newId = res.newId || 'Generated';
     toast(`Worker inducted! ID: ${newId}`, 'success');
-    // Cache locally so dashboard/list updates immediately
+    
     APP_DATA.workers.push({
-      Worker_Unique_ID: newId,
-      Worker_Name: payload.worker_name,
-      Contractor_Name: payload.contractor_name,
-      Designation: payload.designation,
-      Blood_Group: payload.blood_group,
-      Mobile_Number: payload.mobile,
-      Aadhar_Number: payload.aadhar,
-      Address: payload.address,
-      Authorizations: payload.trainings,
-      Photo_Drive_URL: '',
-      Status: 'Active',
-      Induction_Date: new Date().toISOString()
+      Worker_Unique_ID: newId, Worker_Name: name, Contractor_Name: contractor, Designation: finalDesignation,
+      Blood_Group: document.getElementById('w-blood').value, Mobile_Number: mobile, Aadhar_Number: document.getElementById('w-aadhar').value.trim(),
+      Address: document.getElementById('w-address').value.trim(), Authorizations: trainings,
+      Photo_Drive_URL: capturedPhotoBase64 || '', Status: 'Active', Induction_Date: new Date().toISOString()
     });
+
+    // 4. Chain the User Account Creation if required!
+    if (needsAccount) {
+      const userRes = await api('addEmployee', {
+        employeeData: { id: sysId, name: name, role: sysRole, email: sysEmail, phone: mobile, password: sysPwd }
+      });
+      if (userRes.success) {
+        toast(`System Account created successfully!`, 'success');
+        if(APP_DATA.users) {
+          APP_DATA.users.push({ User_ID: sysId, Full_Name: name, Role: sysRole, Email_Address: sysEmail, Phone: mobile, Status: 'Active' });
+          loadAdminUsers();
+        }
+      } else {
+        toast(`Worker inducted, but failed to create user account: ${userRes.message}`, 'error');
+      }
+    }
     clearInductionForm();
   } else {
     toast(res.message || 'Induction failed. Check API.', 'error');
   }
+
+  btn.disabled = false;
+  btn.textContent = 'Submit Induction';
 }
 
 function clearInductionForm() {
-  ['w-name','w-contractor','w-designation','w-aadhar','w-mobile','w-address'].forEach(id => {
-    document.getElementById(id).value = '';
+  ['w-name','w-contractor','w-designation','w-aadhar','w-mobile','w-address','w-sys-id','w-sys-role','w-sys-email','w-sys-pwd'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
   });
   document.getElementById('w-blood').value = '';
   document.getElementById('w-dob').value = '';
+  document.getElementById('w-is-supervisor').checked = false;
+  
   document.querySelectorAll('#page-induction input[type=checkbox]').forEach(cb => {
     cb.checked = false;
     cb.closest('.check-item')?.classList.remove('selected');
   });
+  
   capturedPhotoBase64 = null;
   document.getElementById('photo-preview').style.display = 'none';
   document.getElementById('photo-upload').value = '';
   stopWebcam();
   document.getElementById('webcam-placeholder').style.display = 'block';
+  
+  onEmpTypeChange(); // Reset visibilities
+}
+// ─── CONTRACTOR DROPDOWN & EMPLOYEE TYPE LOGIC ───
+function populateContractorDropdown() {
+  const sel = document.getElementById('w-contractor');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Select Contractor...</option>' + 
+                  APP_DATA.contractors.map(c => `<option value="${c.name}">${c.name}</option>`).join('') +
+                  '<option value="OTHER" style="font-weight:bold;color:var(--g2);">+ Add New Contractor</option>';
+}
+
+function onEmpTypeChange() {
+  const type = document.getElementById('w-emp-type').value;
+  const cGroup = document.getElementById('contractor-group');
+  const supCheckbox = document.getElementById('supervisor-checkbox-group');
+
+  if(type === 'Contractor Worker') {
+    cGroup.style.display = 'block';
+    supCheckbox.style.display = 'block';
+  } else if (type === '3P Worker') {
+    cGroup.style.display = 'none';
+    supCheckbox.style.display = 'none';
+    document.getElementById('w-is-supervisor').checked = false;
+  } else if (type === 'Onroll') {
+    cGroup.style.display = 'none';
+    supCheckbox.style.display = 'none';
+    document.getElementById('w-is-supervisor').checked = false;
+  }
+  toggleSystemAccessFields();
+}
+
+function toggleSystemAccessFields() {
+  const type = document.getElementById('w-emp-type').value;
+  const isSup = document.getElementById('w-is-supervisor').checked;
+  const sysGroup = document.getElementById('system-access-group');
+  const roleGroup = document.getElementById('w-sys-role-group');
+
+  if (type === 'Onroll') {
+    sysGroup.style.display = 'block';
+    roleGroup.style.display = 'block';
+  } else if (type === 'Contractor Worker' && isSup) {
+    sysGroup.style.display = 'block';
+    roleGroup.style.display = 'none'; // Role is implicitly forced to 'Contractor Supervisor'
+  } else {
+    sysGroup.style.display = 'none';
+  }
 }
 
 // ============================================================
@@ -1861,6 +2050,21 @@ function viewPermit(id) {
   document.getElementById('permit-modal-title').textContent = `Permit ${p.Permit_ID}`;
   document.getElementById('permit-modal-sub').textContent = `${p.Permit_Type} — ${p.Area_Name}`;
 
+  let extraInfo = '';
+  if (p.Special_Roles) {
+    try {
+      const sr = JSON.parse(p.Special_Roles);
+      const rows = [];
+      if(sr.tools) rows.push(`<div><span style="color:var(--gray)">Tools:</span> <strong>${sr.tools}</strong></div>`);
+      if(sr.tools_inspected) rows.push(`<div><span style="color:var(--gray)">Tools Inspected:</span> <strong>${sr.tools_inspected}</strong></div>`);
+      if(sr.plant_modification) rows.push(`<div><span style="color:var(--gray)">Plant Mod:</span> <strong>${sr.plant_modification}</strong></div>`);
+      if(sr.fire_watcher) rows.push(`<div><span style="color:var(--gray)">Fire Watcher:</span> <strong>${sr.fire_watcher}</strong></div>`);
+      if(sr.entrant) rows.push(`<div><span style="color:var(--gray)">Entrant:</span> <strong>${sr.entrant}</strong></div>`);
+      if(sr.attendant) rows.push(`<div><span style="color:var(--gray)">Attendant:</span> <strong>${sr.attendant}</strong></div>`);
+      if(rows.length > 0) extraInfo = `<div class="divider"></div><div class="grid-2" style="gap:12px;font-size:14px;margin-bottom:16px;">${rows.join('')}</div>`;
+    } catch(e){}
+  }
+
   const body = document.getElementById('permit-modal-body');
   body.innerHTML = `
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
@@ -1875,6 +2079,7 @@ function viewPermit(id) {
       <div><span style="color:var(--gray)">Date:</span> <strong>${p.Initiation_Timestamp ? new Date(p.Initiation_Timestamp).toLocaleDateString() : '—'}</strong></div>
       <div><span style="color:var(--gray)">Start:</span> <strong>${p.Tentative_Start_DateTime ? new Date(p.Tentative_Start_DateTime).toLocaleString() : '—'}</strong></div>
     </div>
+${extraInfo}
     ${p.Hazards_Selected ? `<div class="divider"></div><div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Hazards</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.Hazards_Selected.split(',').map(h=>`<span class="badge badge-orange">${h.trim()}</span>`).join('')}</div></div>` : ''}
     ${p.PPE_Required ? `<div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">PPE Required</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.PPE_Required.split(',').map(h=>`<span class="badge badge-blue">${h.trim()}</span>`).join('')}</div></div>` : ''}
     ${p.Assigned_Worker_IDs ? `<div><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Workers</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.Assigned_Worker_IDs.split(',').map(w=>`<span class="badge badge-green">${w.trim()}</span>`).join('')}</div></div>` : ''}
@@ -1884,7 +2089,17 @@ function viewPermit(id) {
   const footer = document.getElementById('permit-modal-footer');
   const role = SESSION.user?.Role;
   const status = p.Current_Status;
+  
+  let shareBtns = `
+    <button class="btn btn-ghost" onclick="sharePermit('${p.Permit_ID}', 'email')" style="padding: 8px 12px;">📧 Email</button>
+    <button class="btn btn-ghost hide-on-desktop" onclick="sharePermit('${p.Permit_ID}', 'whatsapp')" style="padding: 8px 12px; color:#25D366;">💬 WhatsApp</button>
+  `;
+
   let btns = '';
+  // Show Edit button ONLY if it's Queried AND the person logged in is the one who created it
+  if (status.includes('Queried') && p.Initiator_User_ID === SESSION.user?.User_ID) {
+    btns += `<button class="btn btn-primary" onclick="editPermit('${p.Permit_ID}')">✏️ Edit & Resubmit</button>`;
+  }
   if (status === 'Pending HOD' && role === 'Area HOD') {
     btns = `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>
             <button class="btn btn-ghost" onclick="doApprove('${p.Permit_ID}','query')">❓ Raise Query</button>`;
@@ -1895,7 +2110,7 @@ function viewPermit(id) {
     btns = `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Final Approve</button>
             <button class="btn btn-danger" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>`;
   }
-  footer.innerHTML = `<button class="btn btn-ghost" onclick="closeModal('permit-detail-modal')">Close</button>${btns}`;
+  footer.innerHTML = `${shareBtns} <div style="flex:1;"></div> <button class="btn btn-ghost" onclick="closeModal('permit-detail-modal')">Close</button>${btns}`;
 
   document.getElementById('permit-detail-modal').classList.add('active');
 }
@@ -1913,21 +2128,88 @@ async function doApprove(permitId, action) {
   }
   loadPermits();
 }
+// ─── SHARE & EDIT PERMITS ───
+let editingPermitId = null;
+
+function sharePermit(id, method) {
+  const p = APP_DATA.permits.find(x => x.Permit_ID === id);
+  if(!p) return;
+  
+  const text = `*Work Permit Details*\nID: ${p.Permit_ID}\nType: ${p.Permit_Type}\nArea: ${p.Area_Name}\nStatus: ${p.Current_Status}\nInitiator: ${p.Initiator_User_ID}\nStart: ${p.Tentative_Start_DateTime ? new Date(p.Tentative_Start_DateTime).toLocaleString() : 'N/A'}`;
+  
+  if(method === 'whatsapp') {
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+  } else {
+    window.location.href = `mailto:?subject=Permit Details - ${p.Permit_ID}&body=${encodeURIComponent(text)}`;
+  }
+}
+
+function editPermit(id) {
+  const p = APP_DATA.permits.find(x => x.Permit_ID === id);
+  if(!p) return;
+  
+  editingPermitId = id;
+  
+  // Pre-fill fields
+  document.getElementById('p-type').value = p.Permit_Type;
+  onPermitTypeChange();
+  document.getElementById('p-area').value = p.Area_Name;
+  document.getElementById('p-supervisor').value = p.Supervisor_User_ID || '';
+  if(p.Tentative_Start_DateTime) document.getElementById('p-startdate').value = p.Tentative_Start_DateTime;
+  document.getElementById('p-maintenance').value = p.Maintenance_Required || 'No';
+  
+  // Pre-fill Checkboxes
+  document.querySelectorAll('#hazards-grid input').forEach(cb => {
+    cb.checked = (p.Hazards_Selected || '').includes(cb.value);
+    if(cb.checked) cb.closest('.check-item').classList.add('selected'); else cb.closest('.check-item').classList.remove('selected');
+  });
+  document.querySelectorAll('#ppe-grid input').forEach(cb => {
+    cb.checked = (p.PPE_Required || '').includes(cb.value);
+    if(cb.checked) cb.closest('.check-item').classList.add('selected'); else cb.closest('.check-item').classList.remove('selected');
+  });
+
+  // Pre-fill Special Roles
+  if(p.Special_Roles) {
+    try {
+      const sr = JSON.parse(p.Special_Roles);
+      if(sr.tools) document.getElementById('p-tools').value = sr.tools;
+      if(sr.tools_inspected) document.getElementById('p-tools-inspected').value = sr.tools_inspected;
+      if(sr.plant_modification) document.getElementById('p-plant-mod').value = sr.plant_modification;
+      if(sr.fire_watcher) document.getElementById('p-fire-watcher').value = sr.fire_watcher;
+      if(sr.entrant) document.getElementById('p-entrant').value = sr.entrant;
+      if(sr.attendant) document.getElementById('p-attendant').value = sr.attendant;
+    } catch(e){}
+  }
+  
+  // Pre-fill Workers
+  selectedWorkers = (p.Assigned_Worker_IDs || '').split(',').filter(Boolean);
+  updateSelectedWorkersDisplay();
+  
+  // Update UI & switch pages
+  document.getElementById('submit-permit-btn').textContent = 'Update & Resubmit Permit';
+  closeModal('permit-detail-modal');
+  showPage('create-permit', document.getElementById('nav-create-permit'));
+}
 
 // ============================================================
 // CREATE PERMIT
 // ============================================================
 function onPermitTypeChange() {
-  const type = document.getElementById('p-type').value;
+  const t = document.getElementById('p-type').value;
+  
+  const genSec = document.getElementById('general-permit-section');
+  if(genSec) genSec.style.display = (t === 'General Work Permit') ? 'block' : 'none';
+
   const sr = document.getElementById('special-roles-section');
+  if(sr) sr.style.display = ['Hot Work', 'Confined Space'].includes(t) ? 'block' : 'none';
+  
   const fw = document.getElementById('fire-watcher-group');
+  if(fw) fw.style.display = t === 'Hot Work' ? 'block' : 'none';
+  
   const en = document.getElementById('entrant-group');
   const at = document.getElementById('attendant-group');
-
-  sr.style.display = type ? 'block' : 'none';
-  fw.style.display = type === 'Hot Work' ? 'block' : 'none';
-  en.style.display = type === 'Confined Space' ? 'block' : 'none';
-  at.style.display = type === 'Confined Space' ? 'block' : 'none';
+  if(en) en.style.display = t === 'Confined Space' ? 'block' : 'none';
+  if(at) at.style.display = t === 'Confined Space' ? 'block' : 'none';
 }
 
 async function loadWorkerSelect() {
@@ -1995,9 +2277,14 @@ async function submitPermit() {
   if (!type || !area) { toast('Permit type and area are required.', 'error'); return; }
 
   const hazards = Array.from(document.querySelectorAll('#hazards-grid input:checked')).map(c => c.value);
-  const ppe = Array.from(document.querySelectorAll('#page-create-permit .card:nth-child(2) input:checked')).map(c => c.value);
+  const ppe = Array.from(document.querySelectorAll('#ppe-grid input:checked')).map(c => c.value);
 
   const specialRoles = {};
+  if (type === 'General Work Permit') {
+    specialRoles.tools = document.getElementById('p-tools').value;
+    specialRoles.tools_inspected = document.getElementById('p-tools-inspected').value;
+    specialRoles.plant_modification = document.getElementById('p-plant-mod').value;
+  }
   if (type === 'Hot Work') specialRoles.fire_watcher = document.getElementById('p-fire-watcher').value;
   if (type === 'Confined Space') {
     specialRoles.entrant = document.getElementById('p-entrant').value;
@@ -2020,8 +2307,10 @@ async function submitPermit() {
     special_roles: JSON.stringify(specialRoles)
   };
 
-  // Backend expects: { action: 'initiatePermit', permitData: {...} }
-  const res = await api('initiatePermit', { permitData: {
+  const endpoint = editingPermitId ? 'updatePermit' : 'initiatePermit';
+  
+  const res = await api(endpoint, { permitData: {
+    permitId: editingPermitId, // Used by backend to find the right row if updating
     type: payload.permit_type,
     initiatorId: SESSION.user.User_ID,
     area: payload.area_name,
@@ -2037,35 +2326,29 @@ async function submitPermit() {
   btn.textContent = 'Submit Permit';
 
   if (res.success) {
-    const pid = res.message?.match(/PTW-\d+-\d+/)?.[0] || 'PTW-NEW';
     toast(`${res.message}`, 'success');
-    // Cache locally
-    APP_DATA.permits.push({
-      Permit_ID: pid,
-      Permit_Type: payload.permit_type,
-      Area_Name: payload.area_name,
-      Initiator_User_ID: SESSION.user.User_ID,
-      Current_Status: 'Pending Area HOD Approval',
-      Initiation_Timestamp: new Date().toISOString(),
-      Hazards_Selected: payload.hazards,
-      PPE_Required: payload.ppe_required,
-      Assigned_Worker_IDs: payload.assigned_workers,
-      Supervisor_User_ID: payload.supervisor,
-      Maintenance_Required: payload.maintenance_required,
-      Tentative_Start_DateTime: payload.tentative_start
-    });
     clearPermitForm();
+    loadPermits(); // Refresh data from backend
+    showPage('permits', document.querySelector('[onclick*="permits"]')); // Send user back to permits view
   } else {
-    toast(res.message || 'Permit creation failed. Check API.', 'error');
+    toast(res.message || 'Permit action failed. Check API.', 'error');
   }
 }
 
 function clearPermitForm() {
+  editingPermitId = null;
+  document.getElementById('submit-permit-btn').textContent = 'Submit Permit';
   document.getElementById('p-type').value = '';
   document.getElementById('p-area').value = '';
   document.getElementById('p-supervisor').value = '';
   document.getElementById('p-startdate').value = '';
   document.getElementById('p-maintenance').value = 'No';
+  document.getElementById('p-tools').value = '';
+  document.getElementById('p-tools-inspected').value = 'Yes';
+  document.getElementById('p-plant-mod').value = 'No';
+  document.getElementById('p-fire-watcher').value = '';
+  document.getElementById('p-entrant').value = '';
+  document.getElementById('p-attendant').value = '';
   document.querySelectorAll('#page-create-permit input[type=checkbox]').forEach(cb => {
     cb.checked = false;
     cb.closest('.check-item')?.classList.remove('selected');
@@ -2129,15 +2412,25 @@ async function loadApprovals() {
 async function loadAdminUsers() {
   const tbody = document.getElementById('admin-users-table');
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><div class="spinner dark" style="margin:auto;"></div></td></tr>';
-  // getUsers not in backend yet — show session user + any newly added this session
-  const rows = [SESSION.user, ...APP_DATA.users.filter(u => u.User_ID !== SESSION.user?.User_ID)];
+  
+  const res = await api('getUsers', {});
+  if (res.success && res.users) {
+    APP_DATA.users = res.users;
+  }
+
+  const rows = APP_DATA.users;
+  if (!rows.length) {
+     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">No users found</td></tr>';
+     return;
+  }
+
   tbody.innerHTML = rows.map(u => `
     <tr>
-      <td><strong>${u.User_ID || u.id || '—'}</strong></td>
-      <td>${u.Full_Name || u.name || '—'}</td>
-      <td><span class="badge badge-green">${u.Role || u.role || '—'}</span></td>
-      <td>${u.Email_Address || u.email || '—'}</td>
-      <td><span class="badge badge-green">Active</span></td>
+      <td><strong>${u.User_ID || '—'}</strong></td>
+      <td>${u.Full_Name || '—'}</td>
+      <td><span class="badge badge-green">${u.Role || '—'}</span></td>
+      <td>${u.Email_Address || '—'}</td>
+      <td><span class="badge badge-green">${u.Status || 'Active'}</span></td>
       <td><button class="btn btn-ghost btn-sm" disabled>Edit</button></td>
     </tr>
   `).join('');
@@ -2157,12 +2450,9 @@ async function submitAddUser() {
 
   if (!id || !name || !role || !pwd) { toast('Fill all required fields.', 'error'); return; }
 
-  // Backend expects: { action: 'addEmployee', employeeData: {...} }
   const res = await api('addEmployee', { employeeData: { id, name, role, email, phone, password: pwd } });
   if (res.success) {
-    APP_DATA.users.push({ User_ID: id, Full_Name: name, Role: role, Email_Address: email });
     closeModal('add-user-modal');
-    // Clear fields
     ['nu-id','nu-name','nu-email','nu-phone','nu-pwd'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
     document.getElementById('nu-role').value = '';
     toast(res.message || 'User added successfully!');
@@ -2170,6 +2460,31 @@ async function submitAddUser() {
   } else {
     toast(res.message || 'Failed to add user.', 'error');
   }
+}
+
+async function loadContractors() {
+  const tbody = document.getElementById('contractors-table');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;"><div class="spinner dark" style="margin:auto;"></div></td></tr>';
+
+  const res = await api('getContractors', {});
+  if (res.success && res.contractors) {
+    APP_DATA.contractors = res.contractors;
+  }
+
+  if (!APP_DATA.contractors.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray);">No contractors registered</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = APP_DATA.contractors.map(c => `
+    <tr>
+      <td><strong>${c.id}</strong></td>
+      <td>${c.name}</td>
+      <td>${c.contact || '—'}</td>
+      <td>${c.phone || '—'}</td>
+      <td><span class="badge badge-green">${c.status || 'Active'}</span></td>
+    </tr>
+  `).join('');
 }
 
 function openAddContractorModal() {
@@ -2183,24 +2498,27 @@ async function submitAddContractor() {
 
   if (!name) { toast('Company name required.', 'error'); return; }
 
-  // No contractor endpoint in backend yet — store locally
-  const newId = 'CON-' + (APP_DATA.contractors.length + 1).toString().padStart(3, '0');
-  APP_DATA.contractors.push({ id: newId, name, contact, phone, status: 'Active' });
-  const tbody = document.getElementById('contractors-table');
-  tbody.innerHTML = APP_DATA.contractors.map(c => `
-    <tr>
-      <td><strong>${c.id}</strong></td>
-      <td>${c.name}</td>
-      <td>${c.contact || '—'}</td>
-      <td>${c.phone || '—'}</td>
-      <td><span class="badge badge-green">Active</span></td>
-    </tr>
-  `).join('');
-  closeModal('add-contractor-modal');
-  toast('Contractor added locally! Add a backend endpoint to persist.');
-}
+  const res = await api('addContractor', { contractorData: { name, contact, phone } });
 
-// Click outside to close modals
+  if (res.success) {
+    toast('Contractor added successfully!', 'success');
+    closeModal('add-contractor-modal');
+    document.getElementById('nc-name').value = '';
+    document.getElementById('nc-contact').value = '';
+    document.getElementById('nc-phone').value = '';
+    
+    // Auto-update dropdowns
+    populateContractorDropdown();
+    
+    // Auto-select in induction form
+    const sel = document.getElementById('w-contractor');
+    if(sel) sel.value = name;
+    
+    loadContractors(); 
+  } else {
+    toast(res.message || 'Failed to add contractor.', 'error');
+  }
+}
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => {
     if (e.target === overlay) overlay.classList.remove('active');
