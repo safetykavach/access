@@ -744,7 +744,10 @@
   <!-- MAIN CONTENT -->
   <div class="main">
     <div class="topbar">
-      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="hide-on-desktop" onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--dark);">☰</button>
+        <div class="topbar-title" id="page-title">Dashboard</div>
+      </div>
       <div class="topbar-actions">
         <div id="topbar-user" style="font-size:14px; color:var(--gray);"></div>
       </div>
@@ -788,19 +791,19 @@
       </div>
 <div style="font-weight:700; font-size:16px; margin-bottom:16px; margin-top:32px;">Quick Actions</div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:32px;">
-        <div class="tile" onclick="showPage('induction', document.querySelector('[onclick*=\\'induction\\']'))">
+        <div class="tile" onclick="showPage('induction')">
           <div class="tile-icon">➕</div>
           <div><div class="tile-title">New Induction</div><div class="tile-sub">Register a new worker</div></div>
         </div>
-        <div class="tile" onclick="showPage('create-permit', document.getElementById('nav-create-permit'))">
+        <div class="tile" onclick="showPage('create-permit')">
           <div class="tile-icon">✍️</div>
           <div><div class="tile-title">Create Permit</div><div class="tile-sub">Initiate a work permit</div></div>
         </div>
-        <div class="tile" onclick="showPage('approvals', document.getElementById('nav-my-approvals'))">
+        <div class="tile" onclick="showPage('approvals')">
           <div class="tile-icon">✅</div>
           <div><div class="tile-title">My Approvals</div><div class="tile-sub">Pending your action</div></div>
         </div>
-        <div class="tile" onclick="showPage('workers', document.querySelector('[onclick*=\\'workers\\']'))">
+        <div class="tile" onclick="showPage('workers')">
           <div class="tile-icon">👷</div>
           <div><div class="tile-title">Worker Directory</div><div class="tile-sub">View all profiles</div></div>
         </div>
@@ -1359,6 +1362,44 @@
 </div>
 
 <!-- TOAST -->
+<div class="modal-overlay" id="permit-closure-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔒 Close Permit Checklist</div>
+      <button class="modal-close" onclick="closeModal('permit-closure-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info">Please verify the following before safely closing this permit.</div>
+      
+      <label class="check-item" style="margin-bottom:10px; cursor:pointer;">
+        <input type="checkbox" id="chk-close-1" onchange="this.parentElement.classList.toggle('selected', this.checked)">
+        <span style="font-size:13px; font-weight:500; color:var(--dark);">All personnel have safely exited the area and are accounted for.</span>
+      </label>
+      
+      <label class="check-item" style="margin-bottom:10px; cursor:pointer;">
+        <input type="checkbox" id="chk-close-2" onchange="this.parentElement.classList.toggle('selected', this.checked)">
+        <span style="font-size:13px; font-weight:500; color:var(--dark);">The area has been cleaned and waste materials removed.</span>
+      </label>
+
+      <label class="check-item" style="margin-bottom:10px; cursor:pointer;">
+        <input type="checkbox" id="chk-close-3" onchange="this.parentElement.classList.toggle('selected', this.checked)">
+        <span style="font-size:13px; font-weight:500; color:var(--dark);">All tools, tackles, and temporary equipment have been removed.</span>
+      </label>
+
+      <div id="hw-closure-check" style="display:none; margin-top:20px;">
+        <div style="font-weight:bold; color:#FF5252; margin-bottom:8px;">🔥 Hot Work Cool-Down Verification</div>
+        <label class="check-item" style="border-color:#FFCDD2; background:#FFEBEE; cursor:pointer;">
+          <input type="checkbox" id="chk-close-hw" onchange="this.parentElement.classList.toggle('selected', this.checked)">
+          <span style="color:#C62828; font-weight:600; font-size:13px;">I confirm I have thoroughly inspected the area for smoldering materials or fire hazards after the 30-min cool-down.</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('permit-closure-modal')">Cancel</button>
+      <button class="btn btn-primary" id="submit-close-btn" onclick="submitClosePermit()">Confirm & Close Permit</button>
+    </div>
+  </div>
+</div>
 <div id="toast-container"></div>
 
 <script>
@@ -1367,9 +1408,10 @@
 // ============================================================
 function getPhotoUrl(url) {
   if (!url) return '';
-  if (url.startsWith('data:image')) return url; // Works for local webcams immediately
-  const match = url.match(/[-\w]{25,}/); // Extracts the Google Drive ID
-  if (match) return `https://drive.google.com/uc?export=view&id=${match[0]}`;
+  if (url.startsWith('data:image')) return url; 
+  const match = url.match(/[-\w]{25,}/); 
+  // Use the reliable thumbnail endpoint to bypass CORS errors
+  if (match) return `https://drive.google.com/thumbnail?id=${match[0]}&sz=w800`;
   return url;
 }
 // ============================================================
@@ -1604,7 +1646,18 @@ function showPage(pageId, navEl) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
   document.getElementById('page-' + pageId)?.classList.add('active');
-  navEl?.classList.add('active');
+  
+  if (navEl) {
+    navEl.classList.add('active');
+  } else {
+    // If clicked from a mobile tile, automatically find and highlight the sidebar item
+    const autoNav = document.querySelector(`.nav-item[onclick*="'${pageId}'"]`);
+    if(autoNav) autoNav.classList.add('active');
+  }
+
+  // Auto-close the sidebar on mobile after clicking something!
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) sidebar.classList.remove('open');
 
   const titles = {
     dashboard: 'Dashboard', workers: 'Workers', induction: 'New Induction',
@@ -2632,12 +2685,11 @@ async function submitClosePermit() {
   const c1 = document.getElementById('chk-close-1').checked;
   const c2 = document.getElementById('chk-close-2').checked;
   const c3 = document.getElementById('chk-close-3').checked;
-  const hwCheck = document.getElementById('chk-close-hw');
+  const hwCheck = document.getElementById('chk-close-hw').checked;
   const p = APP_DATA.permits.find(x => x.Permit_ID === closingPermitId);
 
   if (!c1 || !c2 || !c3) return toast('Please complete all standard checklist items.', 'error');
-  if (p.Permit_Type === 'Hot Work' && !hwCheck.checked) return toast('Please confirm the Hot Work area inspection.', 'error');
-
+  if (p.Permit_Type === 'Hot Work' && !hwCheck) return toast('Please confirm the Hot Work area inspection.', 'error');
   const btn = document.getElementById('submit-close-btn');
   btn.disabled = true; btn.textContent = 'Closing...';
 
