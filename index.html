@@ -376,7 +376,19 @@
     transition: all 0.2s;
   }
   .modal-close:hover { background: #FFEBEE; color: #C62828; }
-
+/* ─── TILES ─── */
+  .tile {
+    background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow2);
+  }
+  .tile:hover { transform: translateY(-4px); border-color: var(--g1); box-shadow: var(--shadow); }
+  .tile-icon {
+    width: 56px; height: 56px; border-radius: 16px; background: var(--g4);
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .tile-title { font-weight: 700; color: var(--dark); font-size: 16px; }
+  .tile-sub { font-size: 12px; color: var(--gray); }
   /* ─── TABS ─── */
   .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--g4); border-radius: var(--radius-sm); padding: 4px; }
   .tab {
@@ -774,7 +786,25 @@
           <div class="stat-icon">🏢</div>
         </div>
       </div>
-
+<div style="font-weight:700; font-size:16px; margin-bottom:16px; margin-top:32px;">Quick Actions</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:32px;">
+        <div class="tile" onclick="showPage('induction', document.querySelector('[onclick*=\\'induction\\']'))">
+          <div class="tile-icon">➕</div>
+          <div><div class="tile-title">New Induction</div><div class="tile-sub">Register a new worker</div></div>
+        </div>
+        <div class="tile" onclick="showPage('create-permit', document.getElementById('nav-create-permit'))">
+          <div class="tile-icon">✍️</div>
+          <div><div class="tile-title">Create Permit</div><div class="tile-sub">Initiate a work permit</div></div>
+        </div>
+        <div class="tile" onclick="showPage('approvals', document.getElementById('nav-my-approvals'))">
+          <div class="tile-icon">✅</div>
+          <div><div class="tile-title">My Approvals</div><div class="tile-sub">Pending your action</div></div>
+        </div>
+        <div class="tile" onclick="showPage('workers', document.querySelector('[onclick*=\\'workers\\']'))">
+          <div class="tile-icon">👷</div>
+          <div><div class="tile-title">Worker Directory</div><div class="tile-sub">View all profiles</div></div>
+        </div>
+      </div>
       <div class="grid-2">
         <div class="card">
           <div class="card-header">
@@ -2061,6 +2091,22 @@ function viewPermit(id) {
       if(sr.fire_watcher) rows.push(`<div><span style="color:var(--gray)">Fire Watcher:</span> <strong>${sr.fire_watcher}</strong></div>`);
       if(sr.entrant) rows.push(`<div><span style="color:var(--gray)">Entrant:</span> <strong>${sr.entrant}</strong></div>`);
       if(sr.attendant) rows.push(`<div><span style="color:var(--gray)">Attendant:</span> <strong>${sr.attendant}</strong></div>`);
+      
+      // NEW: LEL LOGGING FOR CONFINED SPACE
+      if(p.Permit_Type === 'Confined Space') {
+        let lelHtml = `<div style="grid-column:1/-1; background:var(--g4); padding:12px; border-radius:8px; border:1px solid var(--border);"><div style="font-weight:700; font-size:13px; color:var(--g2); margin-bottom:8px;">LEL Logs (Required every 30 mins)</div>`;
+        if(sr.lel_logs && sr.lel_logs.length > 0) {
+          lelHtml += sr.lel_logs.map(log => `<div style="font-size:13px; margin-bottom:4px;">🕒 ${new Date(log.time).toLocaleTimeString()} &mdash; <strong>${log.value}</strong></div>`).join('');
+        } else {
+          lelHtml += `<div style="font-size:12px; color:var(--gray);">No readings logged yet.</div>`;
+        }
+        if(p.Current_Status === 'Approved') {
+          lelHtml += `<div style="display:flex; gap:8px; margin-top:12px;"><input type="text" id="lel-input-${p.Permit_ID}" class="form-input" style="padding:8px 12px; font-size:13px;" placeholder="Enter LEL %"><button class="btn btn-primary btn-sm" onclick="submitLEL('${p.Permit_ID}')">Log LEL</button></div>`;
+        }
+        lelHtml += `</div>`;
+        rows.push(lelHtml);
+      }
+
       if(rows.length > 0) extraInfo = `<div class="divider"></div><div class="grid-2" style="gap:12px;font-size:14px;margin-bottom:16px;">${rows.join('')}</div>`;
     } catch(e){}
   }
@@ -2096,6 +2142,18 @@ ${extraInfo}
   `;
 
   let btns = '';
+  
+  // NEW LOGIC FOR COMPLETE JOB & CLOSE PERMIT
+  const canComplete = ['Maintenance Lead', 'Contractor Supervisor'].includes(role) || p.Supervisor_User_ID === SESSION.user?.User_ID || p.Initiator_User_ID === SESSION.user?.User_ID;
+  const canClose = ['EHS Lead', 'Safety Officer', 'Area HOD'].includes(role) || p.Initiator_User_ID === SESSION.user?.User_ID;
+
+  if (status === 'Approved' && canComplete) {
+    btns += `<button class="btn btn-primary" onclick="markJobComplete('${p.Permit_ID}')" style="background:#2196F3;">🏁 Complete Job</button>`;
+  }
+  if (status === 'Job Completed' && canClose) {
+    btns += `<button class="btn btn-primary" onclick="openClosureModal('${p.Permit_ID}')" style="background:#FF9800; color:#fff;">🔒 Close Permit</button>`;
+  }
+
   // Show Edit button ONLY if it's Queried AND the person logged in is the one who created it
   if (status.includes('Queried') && p.Initiator_User_ID === SESSION.user?.User_ID) {
     btns += `<button class="btn btn-primary" onclick="editPermit('${p.Permit_ID}')">✏️ Edit & Resubmit</button>`;
@@ -2519,6 +2577,85 @@ async function submitAddContractor() {
     toast(res.message || 'Failed to add contractor.', 'error');
   }
 }
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+// ─── LEL, COMPLETE, & CLOSE PERMIT LOGIC ───
+async function submitLEL(id) {
+  const val = document.getElementById('lel-input-' + id).value.trim();
+  if(!val) return toast('Enter LEL value', 'error');
+  const res = await api('logLEL', { permitId: id, lelValue: val });
+  if(res.success) { toast('LEL Logged!'); loadPermits(); closeModal('permit-detail-modal'); } 
+  else toast(res.message, 'error');
+}
+
+async function markJobComplete(id) {
+  if(!confirm('Are you sure the job is completed?')) return;
+  const res = await api('markJobComplete', { permitId: id });
+  if(res.success) { toast('Job marked as complete!'); loadPermits(); closeModal('permit-detail-modal'); }
+  else toast(res.message, 'error');
+}
+
+let closingPermitId = null;
+function openClosureModal(id) {
+  const p = APP_DATA.permits.find(x => x.Permit_ID === id);
+  let sr = {};
+  try { sr = JSON.parse(p.Special_Roles || '{}'); } catch(e){}
+
+  // Hot Work 30-Minute Check
+  if (p.Permit_Type === 'Hot Work') {
+    if (!sr.job_completed_time) return toast('Completion time missing from database.', 'error');
+    const compTime = new Date(sr.job_completed_time).getTime();
+    const diffMins = (Date.now() - compTime) / (1000 * 60);
+    
+    if (diffMins < 30) {
+      return toast(`Hot Work requires a mandatory 30 min fire watch. Wait ${Math.ceil(30 - diffMins)} more mins.`, 'error');
+    }
+    document.getElementById('hw-closure-check').style.display = 'block';
+  } else {
+    document.getElementById('hw-closure-check').style.display = 'none';
+  }
+
+  closingPermitId = id;
+  document.getElementById('chk-close-1').checked = false;
+  document.getElementById('chk-close-2').checked = false;
+  document.getElementById('chk-close-3').checked = false;
+  document.getElementById('chk-close-hw').checked = false;
+  document.querySelectorAll('#permit-closure-modal .check-item').forEach(el => el.classList.remove('selected'));
+  
+  document.getElementById('permit-closure-modal').classList.add('active');
+}
+
+async function submitClosePermit() {
+  const c1 = document.getElementById('chk-close-1').checked;
+  const c2 = document.getElementById('chk-close-2').checked;
+  const c3 = document.getElementById('chk-close-3').checked;
+  const hwCheck = document.getElementById('chk-close-hw');
+  const p = APP_DATA.permits.find(x => x.Permit_ID === closingPermitId);
+
+  if (!c1 || !c2 || !c3) return toast('Please complete all standard checklist items.', 'error');
+  if (p.Permit_Type === 'Hot Work' && !hwCheck.checked) return toast('Please confirm the Hot Work area inspection.', 'error');
+
+  const btn = document.getElementById('submit-close-btn');
+  btn.disabled = true; btn.textContent = 'Closing...';
+
+  const res = await api('closePermit', { permitId: closingPermitId });
+  
+  btn.disabled = false; btn.textContent = 'Confirm & Close Permit';
+
+  if (res.success) {
+    toast('Permit officially closed!', 'success');
+    closeModal('permit-closure-modal');
+    closeModal('permit-detail-modal'); 
+    loadPermits(); 
+  } else {
+    toast(res.message, 'error');
+  }
+}
+
+// Click outside to close modals
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => {
     if (e.target === overlay) overlay.classList.remove('active');
