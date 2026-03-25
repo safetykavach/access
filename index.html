@@ -1140,6 +1140,18 @@
             </div>
 
             <div id="special-roles-section" style="display:none;">
+<div id="height-work-section" style="display:none; margin-bottom:16px;">
+                <label class="check-item" style="border-color:#FFE0B2; background:#FFF3E0; cursor:pointer;" onclick="const cb=document.getElementById('p-height-6m'); cb.checked=!cb.checked; this.classList.toggle('selected', cb.checked); event.stopPropagation();">
+                  <input type="checkbox" id="p-height-6m" onclick="event.stopPropagation()">
+                  <label style="color:#E65100; font-weight:700;">⚠️ Height is more than 6 meters (Requires Plant Head Approval)</label>
+                </label>
+              </div>
+              <div id="hot-work-critical-section" style="display:none; margin-bottom:16px;">
+                <label class="form-label" style="color:#E65100;">⚠️ Critical Area (Requires Plant Head Approval)</label>
+                <select id="p-critical-area-select" class="form-select" style="border-color:#FFE0B2;">
+                  <option value="">None (Standard Area)</option>
+                </select>
+              </div>
               <div class="divider"></div>
               <div class="form-group light" id="fire-watcher-group" style="display:none;">
                 <label class="form-label">🔥 Fire Watcher Name</label>
@@ -1233,6 +1245,16 @@
           <div class="section-sub">User and role management</div>
         </div>
         <button class="btn btn-primary" onclick="openAddUserModal()">➕ Add User</button>
+      </div>
+<div class="card" style="margin-bottom:24px;">
+        <div class="card-header"><div class="card-title">Critical Hot Work Areas</div></div>
+        <div style="display:flex; gap:10px; margin-bottom:16px; max-width:400px;">
+          <input type="text" id="new-critical-area" class="form-input" placeholder="Enter critical area name (e.g. Ammonia Storage)">
+          <button class="btn btn-primary" onclick="submitCriticalArea()">Add Area</button>
+        </div>
+        <div id="critical-areas-list" style="display:flex; flex-wrap:wrap; gap:8px;">
+           <span style="color:var(--gray); font-size:13px;">Loading...</span>
+        </div>
       </div>
       <div class="card">
         <div class="card-header"><div class="card-title">User Management</div></div>
@@ -1582,11 +1604,18 @@ async function launchApp() {
   document.body.appendChild(overlay);
 
  // ── Load persisted data from backend ──
-  const [wRes, pRes, cRes] = await Promise.all([
+  let criticalAreas = [];
+  const [wRes, pRes, cRes, caRes] = await Promise.all([
     api('getWorkers', {}),
     api('getPermits', {}),
-    api('getContractors', {})
+    api('getContractors', {}),
+    api('getCriticalAreas', {})
   ]);
+  if (caRes.success && caRes.areas) {
+    criticalAreas = caRes.areas;
+    renderCriticalAreas();
+    populateCriticalDropdown();
+  }
   if (wRes.success && wRes.workers) APP_DATA.workers = wRes.workers;
   if (pRes.success && pRes.permits) APP_DATA.permits = pRes.permits;
   if (cRes.success && cRes.contractors) APP_DATA.contractors = cRes.contractors;
@@ -2142,6 +2171,8 @@ function viewPermit(id) {
       if(sr.tools_inspected) rows.push(`<div><span style="color:var(--gray)">Tools Inspected:</span> <strong>${sr.tools_inspected}</strong></div>`);
       if(sr.plant_modification) rows.push(`<div><span style="color:var(--gray)">Plant Mod:</span> <strong>${sr.plant_modification}</strong></div>`);
       if(sr.fire_watcher) rows.push(`<div><span style="color:var(--gray)">Fire Watcher:</span> <strong>${sr.fire_watcher}</strong></div>`);
+      if(sr.height_gt_6m) rows.push(`<div><span style="color:var(--gray)">Risk Level:</span> <strong style="color:#C62828;">Height > 6 Meters</strong></div>`);
+      if(sr.is_critical_area) rows.push(`<div><span style="color:var(--gray)">Critical Area:</span> <strong style="color:#C62828;">${sr.critical_area_name}</strong></div>`);
       if(sr.entrant) rows.push(`<div><span style="color:var(--gray)">Entrant:</span> <strong>${sr.entrant}</strong></div>`);
       if(sr.attendant) rows.push(`<div><span style="color:var(--gray)">Attendant:</span> <strong>${sr.attendant}</strong></div>`);
       
@@ -2211,16 +2242,20 @@ ${extraInfo}
   if (status.includes('Queried') && p.Initiator_User_ID === SESSION.user?.User_ID) {
     btns += `<button class="btn btn-primary" onclick="editPermit('${p.Permit_ID}')">✏️ Edit & Resubmit</button>`;
   }
-  if (status === 'Pending HOD' && role === 'Area HOD') {
-    btns = `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>
-            <button class="btn btn-ghost" onclick="doApprove('${p.Permit_ID}','query')">❓ Raise Query</button>`;
-  } else if (status === 'Pending Safety' && role === 'Safety Officer') {
-    btns = `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>
-            <button class="btn btn-danger" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>`;
-  } else if (status === 'Pending Plant Head' && role === 'Plant Head') {
-    btns = `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Final Approve</button>
-            <button class="btn btn-danger" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>`;
+  // Determine if the logged-in user is the current required approver for this exact stage
+  let isCurrentApprover = false;
+  if (status === 'Pending Executor' && ['Maintenance Lead', 'Contractor Supervisor'].includes(role)) isCurrentApprover = true;
+  if (status === 'Pending HOD' && role === 'Area HOD') isCurrentApprover = true;
+  if (status === 'Pending Safety' && ['Safety Officer', 'EHS Lead', 'Plant Head'].includes(role)) isCurrentApprover = true;
+  if (status === 'Pending Plant Head' && role === 'Plant Head') isCurrentApprover = true;
+
+  // If they are the active approver, give them all 3 options!
+  if (isCurrentApprover) {
+    btns += `<button class="btn btn-primary" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>
+             <button class="btn btn-ghost" onclick="doApprove('${p.Permit_ID}','query')">❓ Query</button>
+             <button class="btn btn-danger" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>`;
   }
+
   footer.innerHTML = `${shareBtns} <div style="flex:1;"></div> <button class="btn btn-ghost" onclick="closeModal('permit-detail-modal')">Close</button>${btns}`;
 
   document.getElementById('permit-detail-modal').classList.add('active');
@@ -2285,6 +2320,8 @@ function editPermit(id) {
       const sr = JSON.parse(p.Special_Roles);
       if(sr.tools) document.getElementById('p-tools').value = sr.tools;
       if(sr.tools_inspected) document.getElementById('p-tools-inspected').value = sr.tools_inspected;
+      if(sr.height_gt_6m) { document.getElementById('p-height-6m').checked = true; document.getElementById('p-height-6m').closest('.check-item').classList.add('selected'); }
+      if(sr.is_critical_area) document.getElementById('p-critical-area-select').value = sr.critical_area_name;
       if(sr.plant_modification) document.getElementById('p-plant-mod').value = sr.plant_modification;
       if(sr.fire_watcher) document.getElementById('p-fire-watcher').value = sr.fire_watcher;
       if(sr.entrant) document.getElementById('p-entrant').value = sr.entrant;
@@ -2312,7 +2349,10 @@ function onPermitTypeChange() {
   if(genSec) genSec.style.display = (t === 'General Work Permit') ? 'block' : 'none';
 
   const sr = document.getElementById('special-roles-section');
-  if(sr) sr.style.display = ['Hot Work', 'Confined Space'].includes(t) ? 'block' : 'none';
+  if(sr) sr.style.display = ['Hot Work', 'Confined Space', 'Height Work'].includes(t) ? 'block' : 'none';
+  
+  document.getElementById('height-work-section').style.display = t === 'Height Work' ? 'block' : 'none';
+  document.getElementById('hot-work-critical-section').style.display = t === 'Hot Work' ? 'block' : 'none';
   
   const fw = document.getElementById('fire-watcher-group');
   if(fw) fw.style.display = t === 'Hot Work' ? 'block' : 'none';
@@ -2396,7 +2436,14 @@ async function submitPermit() {
     specialRoles.tools_inspected = document.getElementById('p-tools-inspected').value;
     specialRoles.plant_modification = document.getElementById('p-plant-mod').value;
   }
-  if (type === 'Hot Work') specialRoles.fire_watcher = document.getElementById('p-fire-watcher').value;
+  if (type === 'Height Work') {
+    specialRoles.height_gt_6m = document.getElementById('p-height-6m').checked;
+  }
+  if (type === 'Hot Work') {
+    specialRoles.fire_watcher = document.getElementById('p-fire-watcher').value;
+    const critArea = document.getElementById('p-critical-area-select').value;
+    if(critArea) { specialRoles.is_critical_area = true; specialRoles.critical_area_name = critArea; }
+  }
   if (type === 'Confined Space') {
     specialRoles.entrant = document.getElementById('p-entrant').value;
     specialRoles.attendant = document.getElementById('p-attendant').value;
@@ -2482,14 +2529,15 @@ async function loadApprovals() {
 
   const role = SESSION.user?.Role;
   const statusMap = {
-    'Area HOD': 'Pending HOD',
-    'Safety Officer': 'Pending Safety',
-    'Plant Head': 'Pending Plant Head',
-    'Contractor Supervisor': 'Pending Contractor',
-    'Maintenance Lead': 'Pending Contractor'
+    'Contractor Supervisor': ['Pending Executor'],
+    'Maintenance Lead': ['Pending Executor'],
+    'Area HOD': ['Pending HOD'],
+    'Safety Officer': ['Pending Safety'],
+    'EHS Lead': ['Pending Safety'],
+    'Plant Head': ['Pending Safety', 'Pending Plant Head'] // Plant Head can do both
   };
-  const myStatus = statusMap[role];
-  const myPermits = permits.filter(p => !myStatus || p.Current_Status === myStatus);
+  const myStatuses = statusMap[role] || [];
+  const myPermits = permits.filter(p => myStatuses.includes(p.Current_Status));
 
   if (!myPermits.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>No permits require your action</p></div>';
@@ -2635,6 +2683,30 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     if (e.target === overlay) overlay.classList.remove('active');
   });
 });
+// ─── CRITICAL AREAS ADMIN ───
+function renderCriticalAreas() {
+  const el = document.getElementById('critical-areas-list');
+  if(!el) return;
+  if(criticalAreas.length === 0) { el.innerHTML = '<span style="color:var(--gray); font-size:13px;">No critical areas defined.</span>'; return; }
+  el.innerHTML = criticalAreas.map(a => `<span class="badge badge-orange" style="font-size:13px; padding:6px 12px;">${a}</span>`).join('');
+}
+function populateCriticalDropdown() {
+  const sel = document.getElementById('p-critical-area-select');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">None (Standard Area)</option>' + criticalAreas.map(a => `<option value="${a}">${a}</option>`).join('');
+}
+async function submitCriticalArea() {
+  const val = document.getElementById('new-critical-area').value.trim();
+  if(!val) return toast('Enter area name', 'error');
+  const res = await api('addCriticalArea', { areaName: val });
+  if(res.success) {
+    toast('Critical Area Added!', 'success');
+    document.getElementById('new-critical-area').value = '';
+    criticalAreas = res.areas;
+    renderCriticalAreas();
+    populateCriticalDropdown();
+  } else toast(res.message, 'error');
+}
 // ─── LEL, COMPLETE, & CLOSE PERMIT LOGIC ───
 async function submitLEL(id) {
   const val = document.getElementById('lel-input-' + id).value.trim();
