@@ -367,6 +367,37 @@
     .modal-footer { flex-direction: column; }
     .modal-footer .btn { width: 100%; }
   }
+/* ─── PREMIUM HUD PRELOADER ─── */
+  .sys-loader-container {
+    background: var(--white); border: 1px solid var(--border); padding: 32px 24px;
+    border-radius: 24px; width: 90%; max-width: 420px; /* 90% width makes it mobile perfect! */
+    box-shadow: 0 24px 48px rgba(27, 94, 32, 0.08), 0 0 0 1px rgba(255,255,255,0.5) inset;
+    text-align: center; position: relative; overflow: hidden;
+    transform: translateY(20px) scale(0.95); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .modal-overlay.active .sys-loader-container { transform: translateY(0) scale(1); }
+  .sys-loader-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--g4), var(--g1), var(--g4)); }
+  
+  .hud-wrapper { position: relative; width: 120px; height: 120px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; }
+  .hud-svg { position: absolute; width: 100%; height: 100%; transform-origin: center; }
+  .hud-spin-right { transform-origin: 50px 50px; animation: spin 6s linear infinite; }
+  .hud-spin-left { transform-origin: 50px 50px; animation: spin 4s linear infinite reverse; }
+  .hud-pulse-ring { transform-origin: 50px 50px; animation: pulseRing 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite; }
+  @keyframes pulseRing { 0% { transform: scale(0.6); opacity: 1; stroke-width: 4; } 100% { transform: scale(1.6); opacity: 0; stroke-width: 1; } }
+  
+  .hud-percentage { position: relative; font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--g2); letter-spacing: 1px; z-index: 10; transition: all 0.3s ease; }
+  .hud-wrapper.complete .hud-spin-right, .hud-wrapper.complete .hud-spin-left { animation: none; stroke-dasharray: 300 !important; stroke: var(--g1) !important; transition: all 0.5s ease; }
+  .hud-wrapper.complete .hud-pulse-ring { animation: none; opacity: 0; }
+  .hud-wrapper.complete .hud-percentage { color: var(--g1); transform: scale(1.2); }
+  
+  .sys-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--dark); margin-bottom: 6px; }
+  .sys-status { font-size: 13px; color: var(--gray); font-weight: 600; margin-bottom: 24px; min-height: 18px; font-family: 'DM Sans', monospace; letter-spacing: 0.5px; }
+  
+  .sys-tip-box { background: var(--g4); border: 1px solid var(--g1); border-radius: 12px; padding: 16px; box-shadow: 0 8px 16px rgba(0, 200, 83, 0.12); position: relative; display: flex; align-items: center; min-height: 90px; overflow: hidden; }
+  .tip-icon { font-size: 24px; margin-right: 12px; flex-shrink: 0; animation: floatIcon 3s ease-in-out infinite; }
+  @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); } }
+  .tip-text { font-size: 13.5px; font-weight: 600; color: var(--dark); line-height: 1.4; text-align: left; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; transform: translateY(0); }
+  .tip-text.hidden { opacity: 0; transform: translateY(8px); }
 </style>
 </head>
 <body>
@@ -379,11 +410,29 @@
 
 <!-- WORKSPACE DATA PRELOADER OVERLAY -->
 <div class="modal-overlay" id="workspace-loading-overlay" style="z-index: 9999;">
-  <div style="background: var(--white); padding: 32px; border-radius: var(--radius); text-align: center; box-shadow: var(--shadow); width: auto; min-width: 260px;">
-    <div class="spinner dark" style="margin: 0 auto 20px; width: 44px; height: 44px; border-width: 4px;"></div>
-    <div style="font-weight: 700; color: var(--dark); font-size: 16px;">Loading Workspace...</div>
-    <div style="font-size: 13px; color: var(--gray); margin-top: 8px;">Syncing data securely</div>
-    <button class="btn btn-ghost btn-sm" style="margin-top: 24px; color: var(--gray); width: 100%; border: 1px solid var(--border);" onclick="document.getElementById('workspace-loading-overlay').classList.remove('active')">Force Close</button>
+  <div class="sys-loader-container">
+    
+    <div class="hud-wrapper" id="hud-wrapper">
+      <svg class="hud-svg" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <circle cx="50" cy="50" r="46" fill="none" stroke="var(--g1)" stroke-width="2.5" stroke-dasharray="80 120" class="hud-spin-right" stroke-linecap="round"/>
+        <circle cx="50" cy="50" r="35" fill="none" stroke="var(--border)" stroke-width="1"/>
+        <circle cx="50" cy="50" r="35" fill="none" stroke="var(--g2)" stroke-width="2" stroke-dasharray="40 60" class="hud-spin-left" stroke-linecap="round"/>
+        <circle cx="50" cy="50" r="25" fill="none" stroke="var(--g1)" stroke-width="1" class="hud-pulse-ring"/>
+        <circle cx="50" cy="50" r="26" fill="var(--white)"/>
+      </svg>
+      <div class="hud-percentage" id="loader-percentage">0%</div>
+    </div>
+    
+    <div class="sys-title">SYNCING WORKSPACE</div>
+    <div class="sys-status" id="loader-status-text">Authenticating session...</div>
+    
+    <div class="sys-tip-box">
+      <div class="tip-icon">💡</div>
+      <div id="loading-tip" class="tip-text">Initializing safety protocols...</div>
+    </div>
+
+    <button class="btn btn-ghost btn-sm" style="margin-top: 24px; width: 100%; border: 1px solid var(--border);" onclick="document.getElementById('workspace-loading-overlay').classList.remove('active')">Run in Background</button>
   </div>
 </div>
 
@@ -1093,7 +1142,54 @@
     <div class="modal-footer" id="permit-modal-footer"></div>
   </div>
 </div>
+<div class="modal-overlay" id="extend-permit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⏱️ Extend Permit & Change Team</div>
+      <button class="modal-close" onclick="closeModal('extend-permit-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-error" style="font-weight:bold;">
+        CRITICAL HAZARD WARNING:<br>
+        Extending a permit resets the approval workflow. You must brief the new team on all hazards and LOTO protocols.
+      </div>
+      <div class="form-group light">
+        <label class="form-label">New Supervisor Name *</label>
+        <input type="text" id="extend-supervisor" class="form-input" placeholder="Name of new supervisor taking over">
+      </div>
+      <div class="form-group light">
+        <label class="form-label">Update Workers *</label>
+        <div class="search-bar" style="margin-bottom:12px;">🔍 <input type="text" id="extend-worker-search" placeholder="Search worker to assign..." oninput="filterExtendWorkers()"></div>
+        <div class="worker-select-list" id="extend-worker-list" style="max-height: 150px;"></div>
+      </div>
+      <div id="extend-selected-display" style="display:flex;flex-wrap:wrap;gap:6px; margin-bottom: 12px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('extend-permit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitExtendPermit()">Confirm Extension</button>
+    </div>
+  </div>
+</div>
 
+<div class="modal-overlay" id="cancel-permit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🛑 Request Permit Cancellation</div>
+      <button class="modal-close" onclick="closeModal('cancel-permit-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info">Cancellations require approval from the EHS Lead or Safety Officer.</div>
+      <div class="form-group light">
+        <label class="form-label">Reason for Cancellation *</label>
+        <textarea id="cancel-reason" class="form-textarea" placeholder="E.g., Scope of work changed, emergency stop, equipment failure..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('cancel-permit-modal')">Go Back</button>
+      <button class="btn btn-danger" onclick="submitCancelPermit()">Submit Cancellation Request</button>
+    </div>
+  </div>
+</div>
 <!-- WORKER DETAIL MODAL -->
 <div class="modal-overlay" id="worker-detail-modal">
   <div class="modal">
@@ -1384,10 +1480,118 @@ async function launchApp() {
   applyRoleBasedUI(u.Role);
 
   const overlay = document.getElementById('workspace-loading-overlay');
+  const hudWrapper = document.getElementById('hud-wrapper');
+  const pctEl = document.getElementById('loader-percentage');
+  const statusEl = document.getElementById('loader-status-text');
+  
   overlay.classList.add('active');
+  if(hudWrapper) hudWrapper.classList.remove('complete');
+  if(pctEl) pctEl.textContent = '0%';
+  if(statusEl) statusEl.style.color = "var(--gray)";
+
+  // --- MASSIVE RANDOMIZED TIPS ARRAY ---
+  const tips = [
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Chemicals don’t forgive mistakes—handle with care, always wear PPE",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Read MSDS before chemical use—it’s your survival guide",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Mixing wrong chemicals can create deadly reactions in seconds",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> A small chemical splash can cause permanent damage—use goggles",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Chemical fumes you can’t see can still harm you—use proper ventilation",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Never smell chemicals directly—what you inhale can injure you",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Acid to water = safe; water to acid = danger",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Opening a confined space without testing gas is opening a trap",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Confined space needs permit, gas test & standby man—no shortcuts",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> One breath in toxic space can be your last—always test before entry",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Fire needs fuel, heat & oxygen—remove one, fire is gone",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Small fire ignored becomes a disaster in minutes",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Use the right extinguisher or you may worsen the fire",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> PASS rule: Pull, Aim, Squeeze, Sweep—fight fire smartly",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Never use water on electrical or oil fires—it spreads danger",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Fire prevention is easier than fire fighting",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Safety shoes protect more than feet—they protect your future",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> One falling object can crush your toes—wear safety shoes always",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Safety goggles = clear vision + injury prevention",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Dust today, blindness tomorrow—protect your eyes now",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Helmet is not a choice—it’s a life saver",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> No PPE = No Work, No Risk = No Injury",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Spilled chemical or oil is an accident waiting—clean it immediately",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Improper storage of chemicals can turn safe areas into danger zones",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Label every chemical—unknown = unsafe",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Emergency shower & eyewash can save your life—know their location",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Prevention costs nothing, accidents cost everything",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Safety is not extra work—it’s part of the job",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Don’t learn safety by accident",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Think before you act—safety starts in your mind",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> A safe worker is a smart worker",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Working above 1.8 m (6 ft) without a permit is like working without a safety net",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> CO₂ / BC extinguisher is your best friend in an electrical fire",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> A helmet on your head = a life protected",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Near Miss = warning before accident—don’t ignore it",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Unsafe Act = you chose risk; Unsafe Condition = risk around you",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> One shortcut today can cause a lifetime regret",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Not wearing PPE is like inviting injury",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Lockout-Tagout (LOTO) saves lives, not just machines",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> A small oil spill can cause a big accident",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Loose wires = silent danger waiting to strike",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Running in plant area can stop your life’s race",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Using mobile while driving = risking more than just a call",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Broken ladder = broken safety",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Good housekeeping = fewer accidents",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Fire exits blocked = escape blocked",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Almost hit = Near Miss, report it before it hits next time",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Bypassing safety guards is bypassing your own safety",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Right tool + right way = safe day",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> 95% accidents are caused by unsafe acts—be the 5% safe",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Alert mind = accident-free life",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Safety rules are written in blood—follow them",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> If it feels unsafe, it probably is—STOP & REPORT",
+    "<strong style='color: var(--g2);'>DID YOU KNOW?</strong> Your family is waiting—work safe, go home safe"
+  ];
+  
+  const tipEl = document.getElementById('loading-tip');
+  let tipIndex = Math.floor(Math.random() * tips.length); // Start at a random tip
+  if(tipEl) {
+    tipEl.innerHTML = tips[tipIndex];
+    tipEl.classList.remove('hidden');
+  }
+  
+  const tipInterval = setInterval(() => {
+    if(!tipEl) return;
+    tipEl.classList.add('hidden');
+    setTimeout(() => {
+      tipIndex = (tipIndex + 1) % tips.length;
+      tipEl.innerHTML = tips[tipIndex];
+      tipEl.classList.remove('hidden');
+    }, 400); 
+  }, 4500); 
+
+  // --- STATUS TEXT LOGIC ---
+  const statuses = [
+    "Authenticating session...",
+    "Downloading worker profiles...",
+    "Syncing active work permits...",
+    "Loading safety protocols...",
+    "Finalizing workspace layout..."
+  ];
+  let statusIndex = 0;
+  if(statusEl) statusEl.textContent = statuses[0];
+
+  const statusInterval = setInterval(() => {
+    statusIndex = (statusIndex + 1) % statuses.length;
+    if(statusEl) statusEl.textContent = statuses[statusIndex];
+  }, 1200);
+
+  // --- CIRCULAR PROGRESS LOGIC ---
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    if(progress < 90) { 
+      progress += Math.floor(Math.random() * 8) + 2;
+      if(progress > 90) progress = 90;
+      if(pctEl) pctEl.textContent = progress + '%';
+    }
+  }, 300);
 
   try {
-    // Sequential fetching completely solves the Google Apps Script networking crash limit
+    // Real Data Fetching Sequence
     const wRes = await api('getWorkers', {});
     if (wRes.success && wRes.workers) APP_DATA.workers = wRes.workers;
 
@@ -1406,10 +1610,26 @@ async function launchApp() {
   } catch(e) {
     toast('Network issue while loading. Displaying available cached data.', 'error');
   } finally {
-    overlay.classList.remove('active');
-    populateContractorDropdown();
-    populateWorkerContractorFilter();
-    loadDashboardData();
+    // End animations
+    clearInterval(tipInterval); 
+    clearInterval(progressInterval);
+    clearInterval(statusInterval);
+    
+    // Trigger Completion State
+    if(pctEl) pctEl.textContent = '✓';
+    if(hudWrapper) hudWrapper.classList.add('complete');
+    if(statusEl) {
+      statusEl.textContent = "Workspace Ready!";
+      statusEl.style.color = "var(--g2)";
+    }
+    
+    // Give user a moment to see the checkmark before closing
+    setTimeout(() => {
+      overlay.classList.remove('active');
+      populateContractorDropdown();
+      populateWorkerContractorFilter();
+      loadDashboardData();
+    }, 1000); 
   }
 }
 
@@ -1717,32 +1937,33 @@ function printWorkerCard(id) {
         text-transform: uppercase;
       }
       
-      /* ─── BACK OF CARD ─── */
-      .card-back { background: #F9FBF9; }
+/* ─── BACK OF CARD ─── */
+      .card-back { background: #F9FBF9; display: flex; flex-direction: column; justify-content: space-between; }
       .back-header { 
         background: #C62828; 
         color: #ffffff; 
-        padding: 24px 10px 10px; 
-        font-size: 14px; 
+        padding: 20px 10px 8px; /* Reduced top padding */
+        font-size: 13px; /* Slightly smaller */
         font-weight: 800; 
         text-align: center; 
         text-transform: uppercase; 
         letter-spacing: 0.5px;
       }
       
-      .rules-wrap { padding: 12px; flex: 1; }
-      .rules-list { font-size: 10.5px; text-align: left; padding-left: 16px; color: #0D1F0D; margin: 0; }
-      .rules-list li { margin-bottom: 8px; line-height: 1.4; font-weight: 600; padding-left: 4px; }
-      .rules-list li::marker { color: #C62828; font-size: 14px;}
+      .rules-wrap { padding: 8px 12px; } /* Tighter wrap */
+      .rules-list { font-size: 10px; text-align: left; padding-left: 16px; color: #0D1F0D; margin: 0; }
+      .rules-list li { margin-bottom: 5px; line-height: 1.3; font-weight: 600; padding-left: 4px; }
+      .rules-list li::marker { color: #C62828; font-size: 13px;}
       
       .emergency { 
         background: #FFEBEE; 
         color: #C62828; 
-        padding: 12px 10px; 
-        font-size: 12px; 
+        padding: 10px; /* Tighter padding */
+        font-size: 11.5px; 
         font-weight: 800; 
         text-align: center; 
         border-top: 2px solid #FFCDD2;
+        margin-top: auto; /* Forces it to the absolute bottom */
       }
     </style>
     </head><body>
@@ -2109,8 +2330,13 @@ function toggleSystemAccessFields() {
 }
 
 // ============================================================
-// PERMITS
+// PERMITS (Consolidated & Upgraded)
 // ============================================================
+let editingPermitId = null;
+let activeTimerInterval = null;
+let extendingPermitId = null;
+let extendSelectedWorkers = [];
+
 async function loadPermits() {
   document.getElementById('permits-list').innerHTML = '<div class="empty-state"><div class="spinner dark"></div></div>';
   const res = await api('getPermits', {});
@@ -2157,6 +2383,8 @@ function filterPermits() {
 }
 
 function viewPermit(id) {
+  if (activeTimerInterval) clearInterval(activeTimerInterval); 
+  
   const p = APP_DATA.permits.find(x => x.Permit_ID === id);
   if (!p) return;
 
@@ -2164,58 +2392,112 @@ function viewPermit(id) {
   document.getElementById('permit-modal-sub').textContent = `${p.Permit_Type} — ${p.Area_Name}`;
 
   let extraInfo = '';
-  if (p.Special_Roles) {
-    try {
-      const sr = JSON.parse(p.Special_Roles);
-      const rows = [];
-      if(sr.job_description) rows.push(`<div style="grid-column:1/-1;"><span style="color:var(--gray)">Job Description:</span> <strong style="display:block;margin-top:4px;">${sr.job_description}</strong></div>`);
-      if(sr.tools) rows.push(`<div><span style="color:var(--gray)">Tools:</span> <strong>${sr.tools}</strong></div>`);
-      if(sr.tools_inspected) rows.push(`<div><span style="color:var(--gray)">Tools Inspected:</span> <strong>${sr.tools_inspected}</strong></div>`);
-      if(sr.plant_modification) rows.push(`<div><span style="color:var(--gray)">Plant Mod:</span> <strong>${sr.plant_modification}</strong></div>`);
-      if(sr.fire_watcher) rows.push(`<div><span style="color:var(--gray)">Fire Watcher:</span> <strong>${sr.fire_watcher}</strong></div>`);
-      if(sr.height_gt_6m) rows.push(`<div><span style="color:var(--gray)">Risk Level:</span> <strong style="color:#C62828;">Height > 6 Meters</strong></div>`);
-      if(sr.is_critical_area) rows.push(`<div><span style="color:var(--gray)">Critical Area:</span> <strong style="color:#C62828;">${sr.critical_area_name}</strong></div>`);
-      if(sr.entrant) rows.push(`<div><span style="color:var(--gray)">Entrant:</span> <strong>${sr.entrant}</strong></div>`);
-      if(sr.attendant) rows.push(`<div><span style="color:var(--gray)">Attendant:</span> <strong>${sr.attendant}</strong></div>`);
-      if(sr.additional_hazards) rows.push(`<div style="grid-column:1/-1;"><span style="color:var(--gray)">Additional Hazards:</span> <strong>${sr.additional_hazards}</strong></div>`);
-      
-      if(p.Permit_Type === 'Confined Space') {
-        let lelHtml = `<div style="grid-column:1/-1; background:var(--g4); padding:12px; border-radius:8px; border:1px solid var(--border);"><div style="font-weight:700; font-size:13px; color:var(--g2); margin-bottom:8px;">LEL Logs (Required every 30 mins)</div>`;
-        if(sr.lel_logs && sr.lel_logs.length > 0) {
-          lelHtml += sr.lel_logs.map(log => `<div style="font-size:13px; margin-bottom:4px;">🕒 ${new Date(log.time).toLocaleTimeString()} &mdash; <strong>${log.value}</strong></div>`).join('');
-        } else {
-          lelHtml += `<div style="font-size:12px; color:var(--gray);">No readings logged yet.</div>`;
-        }
-        if(p.Current_Status === 'Approved') {
-          lelHtml += `<div style="display:flex; gap:8px; margin-top:12px;"><input type="text" id="lel-input-${p.Permit_ID}" class="form-input" style="padding:8px 12px; font-size:13px;" placeholder="Enter LEL %"><button class="btn btn-primary btn-sm" onclick="submitLEL('${p.Permit_ID}')">Log LEL</button></div>`;
-        }
-        lelHtml += `</div>`;
-        rows.push(lelHtml);
-      }
-
-      if(rows.length > 0) extraInfo = `<div class="divider"></div><div class="grid-2" style="gap:12px;font-size:14px;margin-bottom:16px;">${rows.join('')}</div>`;
-    } catch(e){}
+  let sr = {};
+  
+  try {
+    if (p.Special_Roles) {
+      sr = JSON.parse(p.Special_Roles);
+    }
+  } catch(e) {
+    console.error("Error parsing Special Roles");
   }
 
+  // --- TIMESTAMPS & AUDIT TRAIL HTML ---
+  let ts = sr.timestamps || {};
+  let auditHtml = `
+    <div style="background:var(--g4); padding:16px; border-radius:12px; border:1px solid var(--border); margin-bottom:16px;">
+      <div style="font-size:12px; font-weight:700; color:var(--g2); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">🕒 Audit Trail</div>
+      <div style="font-size:13px; margin-bottom:4px; display:flex; justify-content:space-between;">
+        <span style="color:var(--gray)">Initiated:</span> <strong>${p.Initiation_Timestamp ? new Date(p.Initiation_Timestamp).toLocaleString() : '—'}</strong>
+      </div>
+      ${ts.executor_approved ? `<div style="font-size:13px; margin-bottom:4px; display:flex; justify-content:space-between;"><span style="color:var(--gray)">Executor Approved:</span> <strong style="color:var(--g2)">${new Date(ts.executor_approved).toLocaleString()}</strong></div>` : ''}
+      ${ts.hod_approved ? `<div style="font-size:13px; margin-bottom:4px; display:flex; justify-content:space-between;"><span style="color:var(--gray)">HOD Approved:</span> <strong style="color:var(--g2)">${new Date(ts.hod_approved).toLocaleString()}</strong></div>` : ''}
+      ${ts.final_approved ? `<div style="font-size:13px; margin-bottom:4px; display:flex; justify-content:space-between;"><span style="color:var(--gray)">Final Safety Approval:</span> <strong style="color:var(--g1)">${new Date(ts.final_approved).toLocaleString()}</strong></div>` : ''}
+      ${sr.cancel_requested_on ? `<div style="font-size:13px; margin-bottom:4px; display:flex; justify-content:space-between;"><span style="color:#C62828">Cancel Requested:</span> <strong style="color:#C62828">${new Date(sr.cancel_requested_on).toLocaleString()}</strong></div>` : ''}
+      ${sr.extended_on ? `<div style="font-size:13px; margin-bottom:4px; display:flex; justify-content:space-between;"><span style="color:#E65100">Permit Extended:</span> <strong style="color:#E65100">${new Date(sr.extended_on).toLocaleString()}</strong></div>` : ''}
+    </div>
+  `;
+
+  // --- LIVE TIMER HTML & LOGIC ---
+  let timerHtml = '';
+  if (p.Current_Status === 'Approved' && ts.final_approved) {
+    timerHtml = `<div id="live-permit-timer" style="background:#E3F2FD; color:#1565C0; padding:12px 16px; border-radius:8px; font-weight:700; font-size:16px; text-align:center; border:1px solid #BBDEFB; margin-bottom:16px; font-family:'Bebas Neue', sans-serif; letter-spacing:1px;">Calculating Active Time...</div>`;
+    
+    const startTime = new Date(ts.final_approved).getTime();
+    activeTimerInterval = setInterval(() => {
+      const now = new Date().getTime();
+      const diff = now - startTime;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      const timerEl = document.getElementById('live-permit-timer');
+      if(timerEl) {
+        if (hours >= 7) {
+          timerEl.style.background = '#FFEBEE'; timerEl.style.color = '#C62828'; timerEl.style.borderColor = '#FFCDD2';
+          timerEl.innerHTML = `⚠️ PERMIT EXCEEDS 7 HOURS: ${hours}h ${mins}m ${secs}s ⚠️`;
+        } else {
+          timerEl.innerHTML = `ACTIVE TIME: ${hours}h ${mins}m ${secs}s`;
+        }
+      }
+    }, 1000);
+  } else if (['Job Completed', 'Closed', 'Cancelled', 'Rejected'].includes(p.Current_Status)) {
+     timerHtml = `<div style="background:#F5F5F5; color:#616161; padding:10px; border-radius:8px; text-align:center; font-weight:600; margin-bottom:16px;">Permit is inactive.</div>`;
+  }
+
+  // --- BUILD EXTRA INFO & LEL LOGS ---
+  const rows = [];
+  if(sr.job_description) rows.push(`<div style="grid-column:1/-1;"><span style="color:var(--gray)">Job Description:</span> <strong style="display:block;margin-top:4px;">${sr.job_description}</strong></div>`);
+  if(sr.cancel_reason) rows.push(`<div style="grid-column:1/-1; background:#FFEBEE; padding:10px; border-radius:8px; border: 1px solid #FFCDD2;"><span style="color:#C62828; font-weight:bold;">Cancellation Reason:</span> <strong style="display:block;margin-top:4px; color:#C62828;">${sr.cancel_reason}</strong></div>`);
+  if(sr.tools) rows.push(`<div><span style="color:var(--gray)">Tools:</span> <strong>${sr.tools}</strong></div>`);
+  if(sr.tools_inspected) rows.push(`<div><span style="color:var(--gray)">Tools Inspected:</span> <strong>${sr.tools_inspected}</strong></div>`);
+  if(sr.plant_modification) rows.push(`<div><span style="color:var(--gray)">Plant Mod:</span> <strong>${sr.plant_modification}</strong></div>`);
+  if(sr.fire_watcher) rows.push(`<div><span style="color:var(--gray)">Fire Watcher:</span> <strong>${sr.fire_watcher}</strong></div>`);
+  if(sr.height_gt_6m) rows.push(`<div><span style="color:var(--gray)">Risk Level:</span> <strong style="color:#C62828;">Height > 6 Meters</strong></div>`);
+  if(sr.is_critical_area) rows.push(`<div><span style="color:var(--gray)">Critical Area:</span> <strong style="color:#C62828;">${sr.critical_area_name}</strong></div>`);
+  if(sr.entrant) rows.push(`<div><span style="color:var(--gray)">Entrant:</span> <strong>${sr.entrant}</strong></div>`);
+  if(sr.attendant) rows.push(`<div><span style="color:var(--gray)">Attendant:</span> <strong>${sr.attendant}</strong></div>`);
+  if(sr.additional_hazards) rows.push(`<div style="grid-column:1/-1;"><span style="color:var(--gray)">Additional Hazards:</span> <strong>${sr.additional_hazards}</strong></div>`);
+  
+  if(p.Permit_Type === 'Confined Space') {
+    let lelHtml = `<div style="grid-column:1/-1; background:var(--g4); padding:12px; border-radius:8px; border:1px solid var(--border);"><div style="font-weight:700; font-size:13px; color:var(--g2); margin-bottom:8px;">LEL Logs (Required every 30 mins)</div>`;
+    if(sr.lel_logs && sr.lel_logs.length > 0) {
+      lelHtml += sr.lel_logs.map(log => `<div style="font-size:13px; margin-bottom:4px;">🕒 ${new Date(log.time).toLocaleTimeString()} — <strong>${log.value}</strong></div>`).join('');
+    } else {
+      lelHtml += `<div style="font-size:12px; color:var(--gray);">No readings logged yet.</div>`;
+    }
+    if(p.Current_Status === 'Approved') {
+      lelHtml += `<div style="display:flex; gap:8px; margin-top:12px;"><input type="text" id="lel-input-${p.Permit_ID}" class="form-input" style="padding:8px 12px; font-size:13px;" placeholder="Enter LEL %"><button class="btn btn-primary btn-sm" onclick="submitLEL('${p.Permit_ID}')">Log LEL</button></div>`;
+    }
+    lelHtml += `</div>`;
+    rows.push(lelHtml);
+  }
+
+  if(rows.length > 0) extraInfo = `<div class="divider"></div><div class="grid-2" style="gap:12px;font-size:14px;margin-bottom:16px;">${rows.join('')}</div>`;
+
+  // --- POPULATE MODAL BODY ---
   const body = document.getElementById('permit-modal-body');
   body.innerHTML = `
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px; align-items:center;">
       ${getBadge(p.Current_Status)}
       <span class="permit-type-badge">${p.Permit_Type}</span>
+      ${sr.is_extended ? '<span class="badge badge-orange" style="background:#FFF3E0; color:#E65100;">EXTENDED</span>' : ''}
     </div>
+    ${timerHtml}
+    ${auditHtml}
     <div class="grid-2" style="gap:12px;font-size:14px;margin-bottom:16px;">
       <div><span style="color:var(--gray)">Area:</span> <strong>${p.Area_Name || '—'}</strong></div>
       <div><span style="color:var(--gray)">Initiator:</span> <strong>${p.Initiator_User_ID || '—'}</strong></div>
       <div><span style="color:var(--gray)">Supervisor:</span> <strong>${p.Supervisor_User_ID || '—'}</strong></div>
-      <div><span style="color:var(--gray)">Date:</span> <strong>${p.Initiation_Timestamp ? new Date(p.Initiation_Timestamp).toLocaleDateString() : '—'}</strong></div>
-      <div><span style="color:var(--gray)">Start:</span> <strong>${p.Tentative_Start_DateTime ? new Date(p.Tentative_Start_DateTime).toLocaleString() : '—'}</strong></div>
+      <div><span style="color:var(--gray)">Tentative Start:</span> <strong>${p.Tentative_Start_DateTime ? new Date(p.Tentative_Start_DateTime).toLocaleString() : '—'}</strong></div>
     </div>
-${extraInfo}
+    ${extraInfo}
     ${p.Hazards_Selected ? `<div class="divider"></div><div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Hazards</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.Hazards_Selected.split(',').map(h=>`<span class="badge badge-orange">${h.trim()}</span>`).join('')}</div></div>` : ''}
     ${p.PPE_Required ? `<div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">PPE Required</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.PPE_Required.split(',').map(h=>`<span class="badge badge-blue">${h.trim()}</span>`).join('')}</div></div>` : ''}
     ${p.Assigned_Worker_IDs ? `<div><div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Workers</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p.Assigned_Worker_IDs.split(',').map(w=>`<span class="badge badge-green">${w.trim()}</span>`).join('')}</div></div>` : ''}
   `;
 
+  // --- DYNAMIC FOOTER BUTTONS ---
   const footer = document.getElementById('permit-modal-footer');
   const role = SESSION.user?.Role;
   const status = p.Current_Status;
@@ -2226,14 +2508,36 @@ ${extraInfo}
   `;
 
   let btns = '';
-  
   const canComplete = ['Maintenance Lead', 'Contractor Supervisor'].includes(role) || p.Supervisor_User_ID === SESSION.user?.User_ID || p.Initiator_User_ID === SESSION.user?.User_ID;
   const canClose = ['EHS Lead', 'Safety Officer', 'Area HOD'].includes(role) || p.Initiator_User_ID === SESSION.user?.User_ID;
 
-  if (status === 'Approved' && canComplete) btns += `<button class="btn btn-primary" onclick="markJobComplete('${p.Permit_ID}')" style="background:#2196F3;">🏁 Complete Job</button>`;
-  if (status === 'Job Completed' && canClose) btns += `<button class="btn btn-primary" onclick="openClosureModal('${p.Permit_ID}')" style="background:#FF9800; color:#fff;">🔒 Close Permit</button>`;
-  if (status.includes('Queried') && p.Initiator_User_ID === SESSION.user?.User_ID) btns += `<button class="btn btn-primary" onclick="editPermit('${p.Permit_ID}')">✏️ Edit & Resubmit</button>`;
+  // 1. Extend & Complete Buttons
+  if (status === 'Approved' && canComplete) {
+    btns += `<button class="btn btn-ghost" onclick="openExtendModal('${p.Permit_ID}')" style="color:#E65100; border-color:#FFB74D; background:#FFF3E0;">⏱️ Extend Permit</button>`;
+    btns += `<button class="btn btn-primary" onclick="markJobComplete('${p.Permit_ID}')" style="background:#2196F3;">🏁 Complete Job</button>`;
+  }
+
+  // 2. Request Cancel Option (If permit is active or pending)
+  if (!['Closed', 'Job Completed', 'Cancelled', 'Rejected', 'Cancellation Requested'].includes(status) && canComplete) {
+    btns = `<button class="btn btn-danger" onclick="openCancelModal('${p.Permit_ID}')">🛑 Request Cancel</button>` + btns;
+  }
+
+  // 3. Safety Officer approving Cancellation
+  if (status === 'Cancellation Requested' && ['EHS Lead', 'Safety Officer'].includes(role)) {
+    btns += `<button class="btn btn-danger" onclick="approveCancellation('${p.Permit_ID}')">🛑 Approve Cancellation</button>`;
+  }
+
+  // 4. Close Permit (After job completion)
+  if (status === 'Job Completed' && canClose) {
+    btns += `<button class="btn btn-primary" onclick="openClosureModal('${p.Permit_ID}')" style="background:#FF9800; color:#fff;">🔒 Close Permit</button>`;
+  }
+
+  // 5. Edit & Resubmit
+  if (status.includes('Queried') && p.Initiator_User_ID === SESSION.user?.User_ID) {
+    btns += `<button class="btn btn-primary" onclick="editPermit('${p.Permit_ID}')">✏️ Edit & Resubmit</button>`;
+  }
   
+  // 6. Approval Workflow Logic
   let isCurrentApprover = false;
   if (status === 'Pending Executor' && ['Maintenance Lead', 'Contractor Supervisor'].includes(role)) isCurrentApprover = true;
   if (status === 'Pending HOD' && role === 'Area HOD') isCurrentApprover = true;
@@ -2264,8 +2568,6 @@ async function doApprove(permitId, action) {
   }
   loadPermits();
 }
-// ─── SHARE & EDIT PERMITS ───
-let editingPermitId = null;
 
 function sharePermit(id, method) {
   const p = APP_DATA.permits.find(x => x.Permit_ID === id);
@@ -2318,6 +2620,128 @@ function editPermit(id) {
   showPage('create-permit', document.getElementById('nav-create-permit'));
 }
 
+// ─── CANCEL PERMIT LOGIC ───
+function openCancelModal(id) {
+  closingPermitId = id; // Reusing variable from closure logic
+  document.getElementById('cancel-reason').value = '';
+  closeModal('permit-detail-modal');
+  document.getElementById('cancel-permit-modal').classList.add('active');
+}
+
+async function submitCancelPermit() {
+  const reason = document.getElementById('cancel-reason').value.trim();
+  if(!reason) return toast('You must provide a reason for cancellation.', 'error');
+  
+  const btn = document.querySelector('#cancel-permit-modal .btn-danger');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  const res = await api('requestCancel', { permitId: closingPermitId, reason: reason });
+  
+  btn.disabled = false; btn.textContent = 'Submit Cancellation Request';
+
+  if (res.success) {
+    toast('Cancellation requested. Awaiting Safety Approval.', 'success');
+    closeModal('cancel-permit-modal');
+    loadPermits();
+  } else toast(res.message, 'error');
+}
+
+async function approveCancellation(id) {
+  if(!confirm('Are you sure you want to permanently cancel this permit?')) return;
+  
+  const res = await api('approveCancel', { permitId: id });
+  if (res.success) {
+    toast('Permit successfully cancelled.', 'success');
+    closeModal('permit-detail-modal');
+    loadPermits();
+  } else toast(res.message, 'error');
+}
+
+// ─── EXTEND PERMIT LOGIC ───
+function openExtendModal(id) {
+  const p = APP_DATA.permits.find(x => x.Permit_ID === id);
+  extendingPermitId = id;
+  
+  document.getElementById('extend-supervisor').value = p.Supervisor_User_ID || '';
+  extendSelectedWorkers = (p.Assigned_Worker_IDs || '').split(',').filter(Boolean);
+  
+  renderExtendWorkers(APP_DATA.workers);
+  updateExtendDisplay();
+  
+  closeModal('permit-detail-modal');
+  document.getElementById('extend-permit-modal').classList.add('active');
+}
+
+function renderExtendWorkers(workers) {
+  const list = document.getElementById('extend-worker-list');
+  if (!workers.length) {
+    list.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray);font-size:13px;">No workers found</div>';
+    return;
+  }
+  list.innerHTML = workers.map(w => `
+    <div class="worker-select-item ${extendSelectedWorkers.includes(w.Worker_Unique_ID) ? 'selected' : ''}"
+         onclick="toggleExtendWorker('${w.Worker_Unique_ID}')">
+      <input type="checkbox" ${extendSelectedWorkers.includes(w.Worker_Unique_ID) ? 'checked' : ''} onclick="event.stopPropagation()">
+      <div>
+        <div style="font-weight:600;font-size:14px;">${w.Worker_Name}</div>
+        <div style="font-size:12px;color:var(--gray);">${w.Worker_Unique_ID}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleExtendWorker(id) {
+  if (extendSelectedWorkers.includes(id)) {
+    extendSelectedWorkers = extendSelectedWorkers.filter(x => x !== id);
+  } else {
+    extendSelectedWorkers.push(id);
+  }
+  renderExtendWorkers(APP_DATA.workers);
+  updateExtendDisplay();
+}
+
+function updateExtendDisplay() {
+  const disp = document.getElementById('extend-selected-display');
+  if (!extendSelectedWorkers.length) { disp.innerHTML = '<span style="font-size:13px; color:var(--gray);">No workers assigned</span>'; return; }
+  
+  disp.innerHTML = extendSelectedWorkers.map(id => {
+    const w = APP_DATA.workers.find(x => x.Worker_Unique_ID === id);
+    return `<span class="badge badge-green" style="cursor:pointer;" onclick="toggleExtendWorker('${id}')">${w?.Worker_Name || id} ✕</span>`;
+  }).join('');
+}
+
+function filterExtendWorkers() {
+  const q = document.getElementById('extend-worker-search').value.toLowerCase();
+  renderExtendWorkers(APP_DATA.workers.filter(w => (w.Worker_Name||'').toLowerCase().includes(q) || (w.Worker_Unique_ID||'').toLowerCase().includes(q)));
+}
+
+async function submitExtendPermit() {
+  const sup = document.getElementById('extend-supervisor').value.trim();
+  if(!sup || extendSelectedWorkers.length === 0) return toast('Supervisor and at least 1 Worker are required.', 'error');
+  
+  const warningMsg = '🚨 CRITICAL HAZARD WARNING 🚨\n\nBy clicking OK, you certify that you have fully briefed the new supervisor and assigned workers regarding the specific hazards, PPE, and LOTO requirements of this job.';
+  if(!confirm(warningMsg)) return;
+
+  const btn = document.querySelector('#extend-permit-modal .btn-primary');
+  btn.disabled = true; btn.textContent = 'Extending...';
+
+  const res = await api('extendPermit', { 
+    permitId: extendingPermitId, 
+    supervisor: sup, 
+    workers: extendSelectedWorkers.join(',') 
+  });
+  
+  btn.disabled = false; btn.textContent = 'Confirm Extension';
+
+  if (res.success) {
+    toast('Permit extended successfully. Sent back to Executor for approval.', 'success');
+    closeModal('extend-permit-modal');
+    loadPermits();
+  } else {
+    toast(res.message, 'error');
+  }
+}
+
 // ============================================================
 // CREATE PERMIT
 // ============================================================
@@ -2360,7 +2784,7 @@ function renderWorkerSelect(workers) {
       <input type="checkbox" ${selectedWorkers.includes(w.Worker_Unique_ID) ? 'checked' : ''} onclick="event.stopPropagation()">
       <div>
         <div style="font-weight:600;font-size:14px;">${w.Worker_Name}</div>
-        <div style="font-size:12px;color:var(--gray);">${w.Worker_Unique_ID} &bull; ${w.Contractor_Name || '—'}</div>
+        <div style="font-size:12px;color:var(--gray);">${w.Worker_Unique_ID} • ${w.Contractor_Name || '—'}</div>
       </div>
     </div>
   `).join('');
@@ -2419,39 +2843,24 @@ async function submitPermit() {
   if (selectedWorkers.length === 0) {
     toast('Please assign at least one worker.', 'error'); return;
   }
-// --- AUTOMATED TRAINING VERIFICATION ---
-  const requiredTrainings = {
-    'Hot Work': 'Hot',
-    'Height Work': 'Height',
-    'Confined Space': 'Confined Space',
-    'Excavation': 'Excavation'
-  };
 
+  const requiredTrainings = { 'Hot Work': 'Hot', 'Height Work': 'Height', 'Confined Space': 'Confined Space', 'Excavation': 'Excavation' };
   const requiredAuth = requiredTrainings[type];
   
-  // If the permit type requires a specific training, check all selected workers
   if (requiredAuth) {
     let unauthorizedWorkers = [];
-    
     for (let id of selectedWorkers) {
       const worker = APP_DATA.workers.find(w => w.Worker_Unique_ID === id);
-      // If the worker's authorization string doesn't include the required word, flag them
-      if (!worker || !(worker.Authorizations || '').includes(requiredAuth)) {
-        unauthorizedWorkers.push(worker ? worker.Worker_Name : id);
-      }
+      if (!worker || !(worker.Authorizations || '').includes(requiredAuth)) unauthorizedWorkers.push(worker ? worker.Worker_Name : id);
     }
-    
-    // If we found anyone without the training, block the submission and show an error
     if (unauthorizedWorkers.length > 0) {
       toast(`Action Blocked: The following workers lack "${requiredAuth}" training: ${unauthorizedWorkers.join(', ')}`, 'error');
-      
-      // Reset the submit button visually so they can try again
       document.getElementById('submit-permit-btn').disabled = false;
       document.getElementById('submit-permit-btn').textContent = 'Submit Permit';
       return; 
     }
   }
-  // ----------------------------------------
+
   const hazards = Array.from(document.querySelectorAll('#hazards-grid input:checked')).map(c => c.value);
   const ppe = Array.from(document.querySelectorAll('#ppe-grid input:checked')).map(c => c.value);
 
@@ -2488,7 +2897,7 @@ async function submitPermit() {
     ppe_required: ppe.join(','),
     supervisor: supervisor,
     tentative_start: startDate,
-    maintenance_required: 'No', // Removed from UI
+    maintenance_required: 'No',
     assigned_workers: selectedWorkers.join(','),
     special_roles: JSON.stringify(specialRoles)
   };
@@ -2508,6 +2917,7 @@ async function submitPermit() {
     maintenance: payload.maintenance_required,
     tentativeStart: payload.tentative_start
   }});
+  
   btn.disabled = false;
   btn.textContent = 'Submit Permit';
 
@@ -2561,8 +2971,8 @@ async function loadApprovals() {
     'Contractor Supervisor': ['Pending Executor'],
     'Maintenance Lead': ['Pending Executor'],
     'Area HOD': ['Pending HOD'],
-    'Safety Officer': ['Pending Safety'],
-    'EHS Lead': ['Pending Safety'],
+    'Safety Officer': ['Pending Safety', 'Cancellation Requested'],
+    'EHS Lead': ['Pending Safety', 'Cancellation Requested'],
     'Plant Head': ['Pending Safety', 'Pending Plant Head']
   };
   const myStatuses = statusMap[role] || [];
@@ -2585,10 +2995,11 @@ async function loadApprovals() {
         <span>📅 ${p.Initiation_Timestamp ? new Date(p.Initiation_Timestamp).toLocaleDateString() : '—'}</span>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>
+        ${p.Current_Status === 'Cancellation Requested' 
+          ? `<button class="btn btn-danger btn-sm" onclick="approveCancellation('${p.Permit_ID}')">🛑 Approve Cancellation</button>`
+          : `<button class="btn btn-primary btn-sm" onclick="doApprove('${p.Permit_ID}','approve')">✅ Approve</button>`
+        }
         <button class="btn btn-ghost btn-sm" onclick="viewPermit('${p.Permit_ID}')">👁 View Details</button>
-        <button class="btn btn-ghost btn-sm" onclick="doApprove('${p.Permit_ID}','query')">❓ Query</button>
-        ${role === 'Safety Officer' || role === 'Plant Head' ? `<button class="btn btn-danger btn-sm" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>` : ''}
       </div>
     </div>
   `).join('');
