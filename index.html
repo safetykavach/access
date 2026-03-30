@@ -708,7 +708,7 @@
         </div>
 
         <div class="card">
-          <div class="card-header"><div class="card-title">📋 Worker Details</div></div>
+          <div class="card-header"><div class="card-title">📋 Employee Details</div></div>
           <div class="form-group light">
             <label class="form-label">Full Name *</label>
             <input type="text" id="w-name" class="form-input" placeholder="Full name">
@@ -729,11 +729,10 @@
               <label class="form-label">Contractor Name *</label>
               <select id="w-contractor" class="form-select" onchange="if(this.value==='OTHER') openAddContractorModal()">
                 <option value="">Select Contractor...</option>
-                </select>
+              </select>
             </div>
           </div>
 
-          <!-- VISITOR SPECIFIC FIELDS -->
           <div class="grid-2" id="visitor-group" style="display:none; margin-bottom:16px;">
             <div class="form-group light" style="margin-bottom:0;">
               <label class="form-label">Meet Whom *</label>
@@ -756,11 +755,41 @@
             <input type="text" id="w-visit-other" class="form-input" placeholder="Please specify">
           </div>
 
-          <div class="form-group light" id="supervisor-checkbox-group" style="display:block; margin-top:-5px; margin-bottom:15px;">
-            <label class="check-item" style="border:none; padding:0; background:transparent;" onclick="const cb=document.getElementById('w-is-supervisor'); cb.checked=!cb.checked; toggleSystemAccessFields(); event.stopPropagation();">
-              <input type="checkbox" id="w-is-supervisor" onclick="event.stopPropagation(); toggleSystemAccessFields();">
-              <label style="color:var(--g2); font-weight:700;">Grant System Access</label>
+          <div class="grid-2" style="margin-bottom: 8px;">
+            <div class="form-group light" style="margin-bottom:0;">
+              <label class="check-item" style="border:none; padding:0; background:transparent;" onclick="const cb=document.getElementById('w-is-supervisor'); cb.checked=!cb.checked; event.stopPropagation();">
+                <input type="checkbox" id="w-is-supervisor" onclick="event.stopPropagation();">
+                <label style="color:var(--dark); font-weight:700;">Assign as Supervisor</label>
+              </label>
+            </div>
+            <div class="form-group light" style="margin-bottom:0;" id="grant-access-wrapper">
+              <label class="check-item" style="border:none; padding:0; background:transparent;" onclick="const cb=document.getElementById('w-grant-access'); cb.checked=!cb.checked; toggleSystemAccessFields(); event.stopPropagation();">
+                <input type="checkbox" id="w-grant-access" onclick="event.stopPropagation(); toggleSystemAccessFields();">
+                <label style="color:var(--g2); font-weight:700;">Grant System Access</label>
+              </label>
+            </div>
+          </div>
+          <div class="form-group light" style="margin-bottom:16px;">
+            <label class="check-item" style="border:none; padding:0; background:transparent; cursor:pointer;" onclick="const cb=document.getElementById('w-is-maintenance'); cb.checked=!cb.checked; event.stopPropagation();">
+              <input type="checkbox" id="w-is-maintenance" onclick="event.stopPropagation();">
+              <label style="color:var(--dark); font-weight:600;">Worker is part of Maintenance Team</label>
             </label>
+          </div>
+
+          <div class="form-group light" style="margin-bottom:16px;" id="auth-add-wrapper">
+             <label class="check-item" style="border:none; padding:0; background:transparent;" onclick="const cb=document.getElementById('w-auth-add-toggle'); cb.checked=!cb.checked; document.getElementById('auth-add-options').style.display = cb.checked ? 'block' : 'none'; event.stopPropagation();">
+                <input type="checkbox" id="w-auth-add-toggle" onclick="event.stopPropagation(); document.getElementById('auth-add-options').style.display = this.checked ? 'block' : 'none';">
+                <label style="color:var(--dark); font-weight:700;">Authorized to add personnel / inductions</label>
+              </label>
+          </div>
+          <div id="auth-add-options" style="display:none; background:var(--g4); padding:16px; border-radius:10px; margin-bottom:16px; border:1px solid var(--border);">
+             <div style="font-size:13px; font-weight:700; color:var(--g2); margin-bottom:12px; text-transform:uppercase;">Select Permissions</div>
+             <div class="grid-2">
+                 <label class="check-item"><input type="checkbox" value="Auth_Add_All" id="auth-all"> <label>All Employees</label></label>
+                 <label class="check-item"><input type="checkbox" value="Auth_Add_Visitor" id="auth-vis"> <label>Visitors Only</label></label>
+                 <label class="check-item"><input type="checkbox" value="Auth_Add_Contractor" id="auth-con"> <label>Contractor Workers</label></label>
+                 <label class="check-item"><input type="checkbox" value="Auth_Add_New_Company" id="auth-new-co"> <label>Add New Contractor</label></label>
+             </div>
           </div>
 
           <div id="system-access-group" style="display:none; background:var(--g4); padding:16px; border-radius:10px; margin-bottom:16px; border:1px solid var(--border);">
@@ -779,7 +808,9 @@
                   <option>Area Incharge</option>
                   <option>Area HOD</option>
                   <option>Plant Head</option>
+                  <option>Contractor Supervisor</option>
                   <option>Maintenance Lead</option>
+                  <option>Other</option>
                 </select>
               </div>
             </div>
@@ -932,10 +963,11 @@
               <textarea id="p-job-desc" class="form-textarea" style="min-height:70px;" placeholder="Detailed description of the job..."></textarea>
             </div>
 
-            <div class="grid-2">
-              <div class="form-group light">
+            <div class="form-group light">
                 <label class="form-label">Supervisor *</label>
-                <input type="text" id="p-supervisor" class="form-input" placeholder="Supervisor name">
+                <select id="p-supervisor" class="form-select" onchange="handleSupervisorSelect(this)">
+                  <option value="">Loading supervisors...</option>
+                </select>
               </div>
               <div class="form-group light">
                 <label class="form-label">Tentative Start Date *</label>
@@ -990,7 +1022,6 @@
                 <input type="text" id="p-attendant" class="form-input" placeholder="Attendant">
               </div>
             </div>
-          </div>
 
           <!-- Hazards -->
           <div class="card" style="margin-bottom:16px;">
@@ -1194,7 +1225,7 @@
 <div class="modal-overlay" id="worker-detail-modal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Worker Details</div>
+      <div class="modal-title">Employee Details</div>
       <button class="modal-close" onclick="closeModal('worker-detail-modal')">✕</button>
     </div>
     <div class="modal-body" id="worker-modal-body"></div>
@@ -1306,10 +1337,9 @@
 // IMAGE HELPER (Upgraded for Google Workspace compatibility)
 // ============================================================
 function getPhotoUrl(url) {
-  if (!url) return '';
-  if (url.startsWith('data:image')) return url; 
-  const match = url.match(/[-\w]{25,}/); 
-  // Uses Google's direct image hosting endpoint which bypasses Drive viewing restrictions
+  if (!url || url === 'No Photo') return '';
+  if (url.startsWith('data:image')) return url;
+  const match = url.match(/[-\w]{25,}/);
   if (match) return `https://lh3.googleusercontent.com/d/${match[0]}`;
   return url;
 }
@@ -1467,6 +1497,8 @@ const ROLE_PERMISSIONS = {
   'Maintenance Lead':      { canInduct:false, canViewWorkers:false, canCreatePermit:true,  canApprove:true,  canAdmin:false, trainings:['General','Hot','Height'] },
 };
 
+let tipInterval, progressInterval, statusInterval;
+
 async function launchApp() {
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -1477,14 +1509,12 @@ async function launchApp() {
   document.getElementById('sidebar-role').textContent = u.Role || 'User';
   document.getElementById('topbar-user').textContent = u.Full_Name || '';
 
-  applyRoleBasedUI(u.Role);
-
   const overlay = document.getElementById('workspace-loading-overlay');
   const hudWrapper = document.getElementById('hud-wrapper');
   const pctEl = document.getElementById('loader-percentage');
   const statusEl = document.getElementById('loader-status-text');
   
-  overlay.classList.add('active');
+  if(overlay) overlay.classList.add('active');
   if(hudWrapper) hudWrapper.classList.remove('complete');
   if(pctEl) pctEl.textContent = '0%';
   if(statusEl) statusEl.style.color = "var(--gray)";
@@ -1548,13 +1578,13 @@ async function launchApp() {
   ];
   
   const tipEl = document.getElementById('loading-tip');
-  let tipIndex = Math.floor(Math.random() * tips.length); // Start at a random tip
+  let tipIndex = Math.floor(Math.random() * tips.length);
   if(tipEl) {
     tipEl.innerHTML = tips[tipIndex];
     tipEl.classList.remove('hidden');
   }
   
-  const tipInterval = setInterval(() => {
+  tipInterval = setInterval(() => {
     if(!tipEl) return;
     tipEl.classList.add('hidden');
     setTimeout(() => {
@@ -1565,24 +1595,18 @@ async function launchApp() {
   }, 4500); 
 
   // --- STATUS TEXT LOGIC ---
-  const statuses = [
-    "Authenticating session...",
-    "Downloading worker profiles...",
-    "Syncing active work permits...",
-    "Loading safety protocols...",
-    "Finalizing workspace layout..."
-  ];
+  const statuses = ["Authenticating session...", "Downloading worker profiles...", "Syncing active work permits...", "Loading safety protocols...", "Finalizing workspace layout..."];
   let statusIndex = 0;
   if(statusEl) statusEl.textContent = statuses[0];
 
-  const statusInterval = setInterval(() => {
+  statusInterval = setInterval(() => {
     statusIndex = (statusIndex + 1) % statuses.length;
     if(statusEl) statusEl.textContent = statuses[statusIndex];
   }, 1200);
 
   // --- CIRCULAR PROGRESS LOGIC ---
   let progress = 0;
-  const progressInterval = setInterval(() => {
+  progressInterval = setInterval(() => {
     if(progress < 90) { 
       progress += Math.floor(Math.random() * 8) + 2;
       if(progress > 90) progress = 90;
@@ -1590,8 +1614,8 @@ async function launchApp() {
     }
   }, 300);
 
+  // --- ACTUAL DATA FETCHING ---
   try {
-    // Real Data Fetching Sequence
     const wRes = await api('getWorkers', {});
     if (wRes.success && wRes.workers) APP_DATA.workers = wRes.workers;
 
@@ -1610,7 +1634,7 @@ async function launchApp() {
   } catch(e) {
     toast('Network issue while loading. Displaying available cached data.', 'error');
   } finally {
-    // End animations
+    // Stop all animations
     clearInterval(tipInterval); 
     clearInterval(progressInterval);
     clearInterval(statusInterval);
@@ -1623,11 +1647,15 @@ async function launchApp() {
       statusEl.style.color = "var(--g2)";
     }
     
-    // Give user a moment to see the checkmark before closing
+    // Wait for the checkmark animation to finish before removing overlay
     setTimeout(() => {
-      overlay.classList.remove('active');
+      if(overlay) overlay.classList.remove('active');
+      
+      // Apply UI visibility AFTER workers are loaded to check custom permissions
+      applyRoleBasedUI(u.Role);
       populateContractorDropdown();
       populateWorkerContractorFilter();
+      populateSupervisorDropdown(); 
       loadDashboardData();
     }, 1000); 
   }
@@ -1636,19 +1664,53 @@ async function launchApp() {
 function applyRoleBasedUI(role) {
   const perms = ROLE_PERMISSIONS[role] || { canInduct:false, canViewWorkers:false, canCreatePermit:false, canApprove:false, canAdmin:false, trainings:['General'] };
 
+  let canInduct = perms.canInduct;
+  let canAddContractor = perms.canAdmin;
+
+  // OVERRIDE UI BASED ON WORKER AUTHORIZATIONS
+  if(SESSION && SESSION.user && APP_DATA.workers) {
+     const myProfile = APP_DATA.workers.find(w => w.Worker_Unique_ID === SESSION.user.User_ID || w.Worker_Name === SESSION.user.Full_Name);
+     if(myProfile && myProfile.Authorizations) {
+        if(myProfile.Authorizations.includes('Auth_Add_All') || 
+           myProfile.Authorizations.includes('Auth_Add_Visitor') || 
+           myProfile.Authorizations.includes('Auth_Add_Contractor')) {
+           canInduct = true;
+        }
+        if(myProfile.Authorizations.includes('Auth_Add_New_Company')) {
+           canAddContractor = true;
+        }
+     }
+  }
+
   const navInduction    = document.querySelector('[onclick*="induction"]');
   const navWorkers      = document.querySelector('[onclick*="workers"]');
   const navCreatePermit = document.getElementById('nav-create-permit');
   const navApprovals    = document.getElementById('nav-my-approvals');
   const navAdmin        = document.getElementById('admin-nav');
   const dashboardWorkersSec = document.getElementById('dashboard-workers-section');
+  const addConBtn       = document.querySelector('#page-contractors .btn-primary');
 
-  if (navInduction)    navInduction.style.display     = perms.canInduct        ? '' : 'none';
+  if (navInduction)    navInduction.style.display     = canInduct              ? '' : 'none';
   if (navWorkers)      navWorkers.style.display       = perms.canViewWorkers   ? '' : 'none';
   if (navCreatePermit) navCreatePermit.style.display  = perms.canCreatePermit  ? '' : 'none';
   if (navApprovals)    navApprovals.style.display     = perms.canApprove       ? '' : 'none';
   if (navAdmin)        navAdmin.style.display         = perms.canAdmin         ? 'block' : 'none';
   if (dashboardWorkersSec) dashboardWorkersSec.style.display = perms.canViewWorkers ? 'block' : 'none';
+  if (addConBtn)       addConBtn.style.display        = canAddContractor       ? '' : 'none';
+
+  // Grant System Access + Authorized to add — only HOD, Plant Head, EHS Lead
+  const canGrantAccess = ['EHS Lead', 'Area HOD', 'Plant Head'].includes(role);
+  const grantAccessWrapper = document.getElementById('grant-access-wrapper');
+  const authAddWrapper     = document.getElementById('auth-add-wrapper');
+  const authAddOptions     = document.getElementById('auth-add-options');
+  if (grantAccessWrapper) grantAccessWrapper.style.display = canGrantAccess ? '' : 'none';
+  if (authAddWrapper)     authAddWrapper.style.display     = canGrantAccess ? '' : 'none';
+  if (!canGrantAccess) {
+    // Hide dependent panels too so they can't bleed through
+    const sysGroup = document.getElementById('system-access-group');
+    if (sysGroup)     sysGroup.style.display     = 'none';
+    if (authAddOptions) authAddOptions.style.display = 'none';
+  }
 
   const trainingMap = { 'General': 'tr-general', 'Hot': 'tr-hot', 'Height': 'tr-height', 'Confined Space': 'tr-confined', 'Excavation': 'tr-excavation', 'Heavy Lifting': 'tr-lifting' };
   Object.entries(trainingMap).forEach(([key, id]) => {
@@ -1661,22 +1723,17 @@ function applyRoleBasedUI(role) {
 }
 
 function handleLogout() { 
-  localStorage.removeItem('safety_kavach_session'); // Clear session
+  localStorage.removeItem('safety_kavach_session'); 
   location.reload(); 
 }
 
-// ============================================================
-// PAGE NAVIGATION
-// ============================================================
 function showPage(pageId, navEl) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
   document.getElementById('page-' + pageId)?.classList.add('active');
-  
-  if (navEl) {
-    navEl.classList.add('active');
-  } else {
+  if (navEl) navEl.classList.add('active');
+  else {
     const autoNav = document.querySelector(`.nav-item[onclick*="'${pageId}'"]`);
     if(autoNav) autoNav.classList.add('active');
   }
@@ -1693,18 +1750,16 @@ function showPage(pageId, navEl) {
   if (pageId === 'create-permit') loadWorkerSelect();
   if (pageId === 'approvals') loadApprovals();
   if (pageId === 'admin') loadAdminUsers();
-if (pageId === 'contractors') loadContractors();
+  if (pageId === 'contractors') loadContractors();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-// ============================================================
-// DASHBOARD
-// ============================================================
 function loadDashboardData() {
   document.getElementById('stat-workers').textContent = APP_DATA.workers.length;
-  document.getElementById('stat-permits').textContent = APP_DATA.permits.filter(p => !['Approved','Rejected'].includes(p.Current_Status)).length;
+  // BUG FIX: Active permits now correctly excludes Cancelled, Closed, Job Completed, Rejected
+  document.getElementById('stat-permits').textContent = APP_DATA.permits.filter(p => !['Closed', 'Job Completed', 'Cancelled', 'Rejected', 'Cancellation Requested'].includes(p.Current_Status)).length;
   document.getElementById('stat-pending').textContent = APP_DATA.permits.filter(p => (p.Current_Status||'').includes('Pending')).length;
   document.getElementById('stat-contractors').textContent = APP_DATA.contractors.length || '0';
   renderDashboardWorkers(APP_DATA.workers.slice(-4).reverse());
@@ -1713,20 +1768,8 @@ function loadDashboardData() {
 
 function renderDashboardWorkers(workers) {
   const el = document.getElementById('dashboard-workers-list');
-  if (!workers.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👷</div><p>No workers inducted yet</p></div>';
-    return;
-  }
-  el.innerHTML = workers.map(w => `
-    <div class="worker-card" onclick="viewWorker('${w.Worker_Unique_ID}')">
-      <div class="worker-avatar">👷</div>
-      <div>
-        <div class="worker-id">${w.Worker_Unique_ID || '—'}</div>
-        <div class="worker-name">${w.Worker_Name || '—'}</div>
-        <div class="worker-meta">${w.Contractor_Name || '—'} &middot; ${w.Status || 'Active'}</div>
-      </div>
-    </div>
-  `).join('');
+  if (!workers.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👷</div><p>No workers inducted yet</p></div>'; return; }
+  el.innerHTML = workers.map(w => `<div class="worker-card" onclick="viewWorker('${w.Worker_Unique_ID}')"><div class="worker-avatar">👷</div><div><div class="worker-id">${w.Worker_Unique_ID || '—'}</div><div class="worker-name">${w.Worker_Name || '—'}</div><div class="worker-meta">${w.Contractor_Name || '—'} · ${w.Status || 'Active'}</div></div></div>`).join('');
 }
 
 function renderDashboardPermits(permits) {
@@ -1777,7 +1820,7 @@ function renderWorkers(workers) {
   grid.innerHTML = workers.map(w => `
     <div class="worker-card" onclick="viewWorker('${w.Worker_Unique_ID}')">
       <div class="worker-avatar">
-        ${w.Photo_Drive_URL ? `<img src="${w.Photo_Drive_URL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.textContent='👷'">` : '👷'}
+        ${getPhotoUrl(w.Photo_Drive_URL) ? `<img src="${getPhotoUrl(w.Photo_Drive_URL)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.textContent='👷'">` : '👷'}
       </div>
       <div style="flex:1;">
         <div class="worker-id">${w.Worker_Unique_ID || '—'}</div>
@@ -1974,7 +2017,10 @@ function printWorkerCard(id) {
         
         <div class="front-body">
           <div class="photo-wrap">
-            <img class="photo" id="worker-photo" src="${getPhotoUrl(w.Photo_Drive_URL)}" onerror="this.outerHTML='<div style=font-size:50px;line-height:90px;text-align:center;>👷</div>'">
+            ${getPhotoUrl(w.Photo_Drive_URL)
+              ? `<img class="photo" id="worker-photo" src="${getPhotoUrl(w.Photo_Drive_URL)}" onerror="this.style.display='none'; this.insertAdjacentHTML('afterend','<div style=font-size:50px;line-height:90px;text-align:center;>👷</div>')">`
+              : `<div class="photo" id="worker-photo" style="font-size:50px;line-height:96px;text-align:center;background:#E8F5E9;">👷</div>`
+            }
           </div>
           
           <div class="name">${w.Worker_Name}</div>
@@ -2042,9 +2088,7 @@ function viewWorker(id) {
   body.innerHTML = `
     <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
       <div style="text-align:center;flex-shrink:0;">
-        ${w.Photo_Drive_URL
-          ? `<img src="${getPhotoUrl(w.Photo_Drive_URL)}" style="width:120px;height:120px;border-radius:16px;object-fit:cover;border:3px solid var(--g4);" onerror="this.outerHTML='<div style=width:120px;height:120px;border-radius:16px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:40px;>👷</div>'">`
-          : `<div style="width:120px;height:120px;border-radius:16px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:40px;">👷</div>`}
+        <img src="${getPhotoUrl(w.Photo_Drive_URL)}" style="width:120px;height:120px;border-radius:16px;object-fit:cover;border:3px solid var(--g4);" onerror="this.outerHTML='<div style=width:120px;height:120px;border-radius:16px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:40px;>👷</div>'">
         <div style="margin-top:8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--g1);">${w.Worker_Unique_ID}</div>
         ${getBadge(w.Status)}
       </div>
@@ -2140,18 +2184,21 @@ function handlePhotoUpload(event) {
 async function submitWorker() {
   const name = document.getElementById('w-name').value.trim();
   const empType = document.getElementById('w-emp-type').value;
-  let contractor = document.getElementById('w-contractor').value;
   const mobile = document.getElementById('w-mobile').value.trim();
+  
+  let contractor = document.getElementById('w-contractor').value;
+  // Override if maintenance is checked
+  if (document.getElementById('w-is-maintenance').checked) contractor = 'Maintenance Team';
 
   const isSup = document.getElementById('w-is-supervisor').checked;
-  const needsAccount = (empType === 'Onroll') || ((empType === 'Contractor Worker' || empType === '3P Worker') && isSup);
+  const needsAccount = document.getElementById('w-grant-access').checked;
 
   let sysId = '', sysRole = '', sysEmail = '', sysPwd = '';
   if (needsAccount) {
     sysId = document.getElementById('w-sys-id').value.trim();
     sysEmail = document.getElementById('w-sys-email').value.trim();
     sysPwd = document.getElementById('w-sys-pwd').value;
-    sysRole = (empType === 'Onroll' || empType === '3P Worker') ? document.getElementById('w-sys-role').value : 'Contractor Supervisor';
+    sysRole = document.getElementById('w-sys-role').value;
 
     if (!sysId || !sysPwd || !sysRole) return toast('User ID, Role, and Password are required for system access.', 'error');
     if (APP_DATA.users && APP_DATA.users.some(u => u.User_ID.toString() === sysId.toString())) {
@@ -2166,118 +2213,91 @@ async function submitWorker() {
   
   if (!name || !mobile) return toast('Name and Mobile are required.', 'error');
   if (!/^\d{10}$/.test(mobile)) return toast('Mobile must be 10 digits.', 'error');
-// --- AGE RESTRICTION VERIFICATION ---
+
   const dobValue = document.getElementById('w-dob').value;
-  if (!dobValue && empType !== 'Visitor') {
-    return toast('Date of Birth is required for workers.', 'error');
-  }
-  
+  if (!dobValue && empType !== 'Visitor') return toast('Date of Birth is required for workers.', 'error');
   if (dobValue) {
-    const dob = new Date(dobValue);
-    const today = new Date();
+    const dob = new Date(dobValue); const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
     const monthDiff = today.getMonth() - dob.getMonth();
-    
-    // Subtract 1 year if they haven't had their birthday yet this year
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-      age--;
-    }
-    
-    if (age < 18) {
-      return toast('Age Restriction: Worker must be at least 18 years old to be inducted.', 'error');
-    }
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+    if (age < 18) return toast('Age Restriction: Worker must be at least 18 years old.', 'error');
   }
-  // ------------------------------------
 
   let finalDesignation = '';
   if (empType === 'Visitor') {
     const meetWhom = document.getElementById('w-meet-whom').value.trim();
     let purpose = document.getElementById('w-visit-purpose').value;
     if (purpose === 'OTHER') purpose = document.getElementById('w-visit-other').value.trim();
-    
     if (!meetWhom || !purpose) return toast('Meet Whom and Purpose are required for visitors.', 'error');
     finalDesignation = `[Visitor] Meet: ${meetWhom} | Purpose: ${purpose}`;
   } else {
-    const rawDesig = document.getElementById('w-designation').value.trim();
-    finalDesignation = `[${empType}] ${rawDesig}`;
+    finalDesignation = `[${empType}] ${document.getElementById('w-designation').value.trim()}`;
   }
   
-  const trainings = Array.from(document.querySelectorAll('#page-induction input[type=checkbox]:checked')).map(cb => cb.value).join(',');
+  // Compile Authorizations
+  const authsArray = Array.from(document.querySelectorAll('#page-induction input[type=checkbox]:checked')).map(cb => cb.value).filter(v => v && v !== 'on');
+  if(isSup) authsArray.push('Supervisor');
+  if(document.getElementById('w-auth-add-toggle').checked) {
+     if(document.getElementById('auth-all').checked) authsArray.push('Auth_Add_All');
+     if(document.getElementById('auth-vis').checked) authsArray.push('Auth_Add_Visitor');
+     if(document.getElementById('auth-con').checked) authsArray.push('Auth_Add_Contractor');
+     if(document.getElementById('auth-new-co').checked) authsArray.push('Auth_Add_New_Company');
+  }
+  const trainings = authsArray.join(',');
 
   const btn = document.getElementById('submit-worker-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Submitting...';
+  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Submitting...';
 
   const res = await api('induction', { formData: {
     name: name, contractor: contractor, designation: finalDesignation,
-    bloodGroup: document.getElementById('w-blood').value, dob: document.getElementById('w-dob').value,
-    mobile: mobile,
+    bloodGroup: document.getElementById('w-blood').value, dob: document.getElementById('w-dob').value, mobile: mobile,
     address: document.getElementById('w-address').value.trim(), authorizations: trainings, photo: capturedPhotoBase64 || null
   }});
 
   if (res.success) {
     const newId = res.newId || 'Generated';
     toast(`${empType === 'Visitor' ? 'Visitor recorded!' : 'Worker inducted!'} ID: ${newId}`, 'success');
-    
-    APP_DATA.workers.push({
-      Worker_Unique_ID: newId, Worker_Name: name, Contractor_Name: contractor, Designation: finalDesignation,
-      Blood_Group: document.getElementById('w-blood').value, Mobile_Number: mobile,
-      Address: document.getElementById('w-address').value.trim(), Authorizations: trainings,
-      Photo_Drive_URL: capturedPhotoBase64 || '', Status: 'Active', Induction_Date: new Date().toISOString()
-    });
+    APP_DATA.workers.push({ Worker_Unique_ID: newId, Worker_Name: name, Contractor_Name: contractor, Designation: finalDesignation, Blood_Group: document.getElementById('w-blood').value, Mobile_Number: mobile, Address: document.getElementById('w-address').value.trim(), Authorizations: trainings, Photo_Drive_URL: capturedPhotoBase64 || '', Status: 'Active', Induction_Date: new Date().toISOString() });
 
     if (needsAccount) {
-      const userRes = await api('addEmployee', {
-        employeeData: { id: sysId, name: name, role: sysRole, email: sysEmail, phone: mobile, password: sysPwd }
-      });
+      const userRes = await api('addEmployee', { employeeData: { id: sysId, name: name, role: sysRole, email: sysEmail, phone: mobile, password: sysPwd } });
       if (userRes.success) {
-        toast(`System Account created successfully!`, 'success');
-        if(APP_DATA.users) {
-          APP_DATA.users.push({ User_ID: sysId, Full_Name: name, Role: sysRole, Email_Address: sysEmail, Phone: mobile, Status: 'Active' });
-          loadAdminUsers();
-        }
-      } else {
-        toast(`Profile recorded, but failed to create user account: ${userRes.message}`, 'error');
-      }
+        toast(`System Account created!`, 'success');
+        if(APP_DATA.users) APP_DATA.users.push({ User_ID: sysId, Full_Name: name, Role: sysRole, Email_Address: sysEmail, Phone: mobile, Status: 'Active' });
+      } else toast(`Profile recorded, but failed to create user account: ${userRes.message}`, 'error');
     }
     clearInductionForm();
-  } else {
-    toast(res.message || 'Action failed. Check API.', 'error');
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Submit Induction';
+  } else toast(res.message || 'Action failed. Check API.', 'error');
+  btn.disabled = false; btn.textContent = 'Submit Induction';
 }
 
 function clearInductionForm() {
-  ['w-name','w-contractor','w-designation','w-mobile','w-address','w-sys-id','w-sys-role','w-sys-email','w-sys-pwd', 'w-meet-whom', 'w-visit-purpose', 'w-visit-other'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = '';
-  });
+  ['w-name','w-contractor','w-designation','w-mobile','w-address','w-sys-id','w-sys-role','w-sys-email','w-sys-pwd', 'w-meet-whom', 'w-visit-purpose', 'w-visit-other'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('w-blood').value = '';
   document.getElementById('w-dob').value = '';
+  document.getElementById('w-is-maintenance').checked = false;
   document.getElementById('w-is-supervisor').checked = false;
+  document.getElementById('w-grant-access').checked = false;
+  document.getElementById('w-auth-add-toggle').checked = false;
+  document.getElementById('auth-all').checked = false;
+  document.getElementById('auth-vis').checked = false;
+  document.getElementById('auth-con').checked = false;
+  document.getElementById('auth-new-co').checked = false;
+  document.getElementById('auth-add-options').style.display = 'none';
+  document.getElementById('system-access-group').style.display = 'none';
   document.getElementById('w-visit-other-group').style.display = 'none';
   
-  document.querySelectorAll('#page-induction input[type=checkbox]').forEach(cb => {
-    cb.checked = false;
-    cb.closest('.check-item')?.classList.remove('selected');
-  });
-  
-  capturedPhotoBase64 = null;
-  document.getElementById('photo-preview').style.display = 'none';
-stopWebcam();
-  document.getElementById('webcam-placeholder').style.display = 'block';
-  
-  onEmpTypeChange(); // Reset visibilities
+  document.querySelectorAll('#page-induction input[type=checkbox]').forEach(cb => { cb.checked = false; cb.closest('.check-item')?.classList.remove('selected'); });
+  capturedPhotoBase64 = null; document.getElementById('photo-preview').style.display = 'none';
+  stopWebcam(); document.getElementById('webcam-placeholder').style.display = 'block';
+  onEmpTypeChange();
 }
 
 function populateContractorDropdown() {
   const options = '<option value="">Select Contractor...</option>' + 
-                  '<option value="Maintenance Team" style="font-weight:600;color:var(--g2);">🛠 Maintenance Team</option>' +
                   APP_DATA.contractors.map(c => `<option value="${c.name}">${c.name}</option>`).join('') +
                   '<option value="OTHER" style="font-weight:bold;color:var(--g1);">+ Add New Contractor</option>';
-
   const sel = document.getElementById('w-contractor');
   if(sel) sel.innerHTML = options;
 }
@@ -2296,36 +2316,48 @@ function populateWorkerContractorFilter() {
 function onEmpTypeChange() {
   const type = document.getElementById('w-emp-type').value;
   const cGroup = document.getElementById('contractor-group');
-  const supCheckbox = document.getElementById('supervisor-checkbox-group');
   const visGroup = document.getElementById('visitor-group');
   const desigGroup = document.getElementById('designation-group');
 
   if(type === 'Contractor Worker') {
-    cGroup.style.display = 'block'; supCheckbox.style.display = 'block'; visGroup.style.display = 'none'; desigGroup.style.display = 'block';
+    cGroup.style.display = 'block'; visGroup.style.display = 'none'; desigGroup.style.display = 'block';
   } else if (type === '3P Worker') {
-    cGroup.style.display = 'none'; supCheckbox.style.display = 'block'; visGroup.style.display = 'none'; desigGroup.style.display = 'block';
+    cGroup.style.display = 'none'; visGroup.style.display = 'none'; desigGroup.style.display = 'block';
   } else if (type === 'Onroll') {
-    cGroup.style.display = 'none'; supCheckbox.style.display = 'none'; visGroup.style.display = 'none'; desigGroup.style.display = 'block';
+    cGroup.style.display = 'none'; visGroup.style.display = 'none'; desigGroup.style.display = 'block';
   } else if (type === 'Visitor') {
-    cGroup.style.display = 'none'; supCheckbox.style.display = 'none'; visGroup.style.display = 'grid'; desigGroup.style.display = 'none';
+    cGroup.style.display = 'none'; visGroup.style.display = 'grid'; desigGroup.style.display = 'none';
   }
+}
+
+function populateSupervisorDropdown() {
+  const sel = document.getElementById('p-supervisor');
+  if(!sel) return;
+  let options = '<option value="">Select Supervisor...</option>';
+  options += `<option value="SELF" style="font-weight:bold; color:var(--g1);">Choose myself as supervisor</option>`;
   
-  document.getElementById('w-is-supervisor').checked = false;
-  toggleSystemAccessFields();
+  const sups = APP_DATA.workers.filter(w => (w.Authorizations || '').includes('Supervisor'));
+  sups.forEach(s => { options += `<option value="${s.Worker_Name} (${s.Worker_Unique_ID})">${s.Worker_Name} (${s.Worker_Unique_ID})</option>`; });
+  sel.innerHTML = options;
+}
+
+function handleSupervisorSelect(sel) {
+  if(sel.value === 'SELF') {
+    alert("⚠️ You are taking responsibility to supervise the work in your area. Make sure all work will be done in your presence.");
+    sel.options[sel.selectedIndex].value = `${SESSION.user.Full_Name} (${SESSION.user.User_ID})`;
+    sel.options[sel.selectedIndex].text = `${SESSION.user.Full_Name} (Me)`;
+  }
 }
 
 function toggleSystemAccessFields() {
-  const type = document.getElementById('w-emp-type').value;
-  const isSup = document.getElementById('w-is-supervisor').checked;
+  const isGranted = document.getElementById('w-grant-access').checked;
   const sysGroup = document.getElementById('system-access-group');
-  const roleGroup = document.getElementById('w-sys-role-group');
-
-  if (type === 'Onroll') {
-    sysGroup.style.display = 'block'; roleGroup.style.display = 'block';
-  } else if ((type === 'Contractor Worker' || type === '3P Worker') && isSup) {
-    sysGroup.style.display = 'block'; roleGroup.style.display = (type === '3P Worker') ? 'block' : 'none';
-  } else {
-    sysGroup.style.display = 'none';
+  sysGroup.style.display = isGranted ? 'block' : 'none';
+  if (!isGranted) {
+    document.getElementById('w-sys-id').value = '';
+    document.getElementById('w-sys-role').value = '';
+    document.getElementById('w-sys-email').value = '';
+    document.getElementById('w-sys-pwd').value = '';
   }
 }
 
@@ -2503,41 +2535,35 @@ function viewPermit(id) {
   const status = p.Current_Status;
   
   let shareBtns = `
-    <button class="btn btn-ghost" onclick="sharePermit('${p.Permit_ID}', 'email')" style="padding: 8px 12px;">📧 Email</button>
-    <button class="btn btn-ghost hide-on-desktop" onclick="sharePermit('${p.Permit_ID}', 'whatsapp')" style="padding: 8px 12px; color:#25D366;">💬 WhatsApp</button>
+    <button class="btn btn-ghost btn-sm" onclick="sharePermit('${p.Permit_ID}', 'email')" style="padding: 8px 12px;">📧 Email</button>
+    <button class="btn btn-ghost btn-sm" onclick="sharePermit('${p.Permit_ID}', 'whatsapp')" style="padding: 8px 12px; color:#25D366; border-color:#25D366;">💬 WhatsApp</button>
   `;
 
   let btns = '';
   const canComplete = ['Maintenance Lead', 'Contractor Supervisor'].includes(role) || p.Supervisor_User_ID === SESSION.user?.User_ID || p.Initiator_User_ID === SESSION.user?.User_ID;
   const canClose = ['EHS Lead', 'Safety Officer', 'Area HOD'].includes(role) || p.Initiator_User_ID === SESSION.user?.User_ID;
 
-  // 1. Extend & Complete Buttons
   if (status === 'Approved' && canComplete) {
     btns += `<button class="btn btn-ghost" onclick="openExtendModal('${p.Permit_ID}')" style="color:#E65100; border-color:#FFB74D; background:#FFF3E0;">⏱️ Extend Permit</button>`;
     btns += `<button class="btn btn-primary" onclick="markJobComplete('${p.Permit_ID}')" style="background:#2196F3;">🏁 Complete Job</button>`;
   }
 
-  // 2. Request Cancel Option (If permit is active or pending)
   if (!['Closed', 'Job Completed', 'Cancelled', 'Rejected', 'Cancellation Requested'].includes(status) && canComplete) {
-    btns = `<button class="btn btn-danger" onclick="openCancelModal('${p.Permit_ID}')">🛑 Request Cancel</button>` + btns;
+    btns = `<button class="btn btn-danger" onclick="openCancelModal('${p.Permit_ID}')">🛑 Cancel Request</button>` + btns;
   }
 
-  // 3. Safety Officer approving Cancellation
   if (status === 'Cancellation Requested' && ['EHS Lead', 'Safety Officer'].includes(role)) {
-    btns += `<button class="btn btn-danger" onclick="approveCancellation('${p.Permit_ID}')">🛑 Approve Cancellation</button>`;
+    btns += `<button class="btn btn-danger" onclick="approveCancellation('${p.Permit_ID}')">🛑 Approve Cancel</button>`;
   }
 
-  // 4. Close Permit (After job completion)
   if (status === 'Job Completed' && canClose) {
     btns += `<button class="btn btn-primary" onclick="openClosureModal('${p.Permit_ID}')" style="background:#FF9800; color:#fff;">🔒 Close Permit</button>`;
   }
 
-  // 5. Edit & Resubmit
   if (status.includes('Queried') && p.Initiator_User_ID === SESSION.user?.User_ID) {
     btns += `<button class="btn btn-primary" onclick="editPermit('${p.Permit_ID}')">✏️ Edit & Resubmit</button>`;
   }
   
-  // 6. Approval Workflow Logic
   let isCurrentApprover = false;
   if (status === 'Pending Executor' && ['Maintenance Lead', 'Contractor Supervisor'].includes(role)) isCurrentApprover = true;
   if (status === 'Pending HOD' && role === 'Area HOD') isCurrentApprover = true;
@@ -2550,7 +2576,13 @@ function viewPermit(id) {
              <button class="btn btn-danger" onclick="doApprove('${p.Permit_ID}','reject')">❌ Reject</button>`;
   }
 
-  footer.innerHTML = `${shareBtns} <div style="flex:1;"></div> <button class="btn btn-ghost" onclick="closeModal('permit-detail-modal')">Close</button>${btns}`;
+  // Organized Footer (No Close Button, cleaner layout)
+  footer.innerHTML = `
+    <div style="display:flex; justify-content:space-between; width:100%; align-items:center; flex-wrap:wrap; gap:16px;">
+      <div style="display:flex; gap:8px;">${shareBtns}</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">${btns}</div>
+    </div>
+  `;
 
   document.getElementById('permit-detail-modal').classList.add('active');
 }
@@ -2561,19 +2593,43 @@ async function doApprove(permitId, action) {
 
   const res = await api('approvePermit', { permitId, approvalAction: action, comments, userId: SESSION.user.User_ID });
   closeModal('permit-detail-modal');
-  if (res.success) {
-    toast(`Permit ${action === 'approve' ? 'Approved ✅' : action === 'reject' ? 'Rejected ❌' : 'Queried ❓'}`, 'success');
-  } else {
-    toast(res.message || 'Action failed.', 'error');
-  }
+  if (res.success) toast(`Permit ${action === 'approve' ? 'Approved ✅' : action === 'reject' ? 'Rejected ❌' : 'Queried ❓'}`, 'success');
+  else toast(res.message || 'Action failed.', 'error');
   loadPermits();
 }
 
 function sharePermit(id, method) {
   const p = APP_DATA.permits.find(x => x.Permit_ID === id);
   if(!p) return;
-  const text = `*Work Permit Details*\nID: ${p.Permit_ID}\nType: ${p.Permit_Type}\nArea: ${p.Area_Name}\nStatus: ${p.Current_Status}\nInitiator: ${p.Initiator_User_ID}\nStart: ${p.Tentative_Start_DateTime ? new Date(p.Tentative_Start_DateTime).toLocaleString() : 'N/A'}`;
-  if(method === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(text)}`); else window.location.href = `mailto:?subject=Permit Details - ${p.Permit_ID}&body=${encodeURIComponent(text)}`;
+  let sr = {}; try{ sr=JSON.parse(p.Special_Roles||'{}'); }catch(e){}
+  let ts = sr.timestamps || {};
+  
+  let workerNames = [];
+  if(p.Assigned_Worker_IDs) {
+     workerNames = p.Assigned_Worker_IDs.split(',').map(wId => {
+        const w = APP_DATA.workers.find(x => x.Worker_Unique_ID === wId.trim());
+        return w ? `${w.Worker_Name} (${wId.trim()})` : wId.trim();
+     });
+  }
+  
+  // Map Initiator ID to their full name if possible
+  const initiatorName = APP_DATA.users?.find(u => u.User_ID.toString() === p.Initiator_User_ID.toString())?.Full_Name || p.Initiator_User_ID;
+
+  const text = `*Work Permit: ${p.Permit_ID}*\n\n` +
+  `*Status:* ${p.Current_Status}\n` +
+  `*Type:* ${p.Permit_Type}\n` +
+  `*Area:* ${p.Area_Name}\n\n` +
+  `*Personnel*\n` +
+  `Initiator: ${initiatorName}\n` +
+  `Supervisor: ${p.Supervisor_User_ID}\n` +
+  `Workers:\n- ${workerNames.join('\n- ') || 'None'}\n\n` +
+  `*Job Description*\n${sr.job_description || 'N/A'}\n\n` +
+  `*Timestamps*\n` +
+  `Initiated: ${p.Initiation_Timestamp ? new Date(p.Initiation_Timestamp).toLocaleString() : 'N/A'}\n` +
+  `Approved: ${ts.final_approved ? new Date(ts.final_approved).toLocaleString() : 'Pending'}`;
+
+  if(method === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(text)}`); 
+  else window.location.href = `mailto:?subject=Permit Details - ${p.Permit_ID}&body=${encodeURIComponent(text)}`;
 }
 
 function editPermit(id) {
@@ -3191,6 +3247,7 @@ function openClosureModal(id) {
   
   document.getElementById('permit-closure-modal').classList.add('active');
 }
+window.markJobComplete = markJobComplete;
 
 async function submitClosePermit() {
   const c1 = document.getElementById('chk-close-1').checked;
@@ -3217,6 +3274,7 @@ async function submitClosePermit() {
     toast(res.message, 'error');
   }
 }
+
 </script>
 </body>
 </html>
