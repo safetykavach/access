@@ -1692,7 +1692,7 @@ async function launchApp() {
   }, 4500); 
 
   // --- STATUS TEXT LOGIC ---
-  const statuses = ["Authenticating session...", "Downloading worker profiles...", "Syncing active work permits...", "Loading safety protocols...", "Finalizing workspace layout..."];
+  const statuses = ["Authenticating session...", "Downloading profiles...", "Syncing active work permits...", "Loading safety protocols...", "Finalizing workspace layout..."];
   let statusIndex = 0;
   if(statusEl) statusEl.textContent = statuses[0];
 
