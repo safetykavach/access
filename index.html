@@ -592,13 +592,14 @@
           </div>
           <div class="stat-icon">⏳</div>
         </div>
+        
         <div class="stat-card">
           <div>
-            <div class="stat-value" id="stat-contractors">—</div>
-            <div class="stat-label">Contractors</div>
-            <div class="stat-change">Registered</div>
+            <div class="stat-value" id="stat-visitors">—</div>
+            <div class="stat-label">Visitors Inside</div>
+            <div class="stat-change" style="color:#FF9800;">Currently in plant</div>
           </div>
-          <div class="stat-icon">🏢</div>
+          <div class="stat-icon" style="background:#FFF3E0; color:#E65100;">🪪</div>
         </div>
       </div>
       <div style="font-weight:700; font-size:16px; margin-bottom:16px; margin-top:32px;">Quick Actions</div>
@@ -661,15 +662,27 @@
       </div>
       <div class="card">
         <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-          <div class="search-bar" style="max-width:320px;">
+         <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap; align-items:center;">
+          <div class="search-bar" style="max-width:280px;">
             🔍
-            <input type="text" id="worker-search" placeholder="Search by name, ID, contractor..." oninput="filterWorkers()">
+            <input type="text" id="worker-search" placeholder="Search name, ID, contractor..." oninput="filterWorkers()">
           </div>
+          
           <select class="form-input" style="max-width:180px;background:var(--white);color:var(--dark);border-color:var(--border);" id="worker-status-filter" onchange="filterWorkers()">
-            <option value="">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="">All Statuses</option>
+            <option value="Active">Inside Plant (Active)</option>
+            <option value="Checked Out">Checked Out / Inactive</option>
           </select>
+
+          <select class="form-input" style="max-width:180px;background:var(--white);color:var(--dark);border-color:var(--border);" id="worker-date-filter" onchange="toggleDatePicker(); filterWorkers();">
+            <option value="">All Time</option>
+            <option value="Today">Today's Visitors</option>
+            <option value="Yesterday">Yesterday's Visitors</option>
+            <option value="Selected">Select Date...</option>
+          </select>
+          
+          <input type="date" id="worker-specific-date" class="form-input" style="max-width:160px; display:none; background:var(--white);color:var(--dark);border-color:var(--border);" onchange="filterWorkers()">
+        </div>
         </div>
         <div id="workers-grid" class="grid-3" style="gap:12px;">
           <div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">👷</div><p>Loading workers...</p></div>
@@ -782,6 +795,12 @@
                 <label style="color:var(--dark); font-weight:700;">Authorized to add personnel / inductions</label>
               </label>
           </div>
+<div class="form-group light" style="margin-bottom:16px;" id="auth-create-permit-wrapper">
+   <label class="check-item" style="border:none; padding:0; background:transparent;" onclick="const cb=document.getElementById('w-auth-create-permit'); cb.checked=!cb.checked; event.stopPropagation();">
+      <input type="checkbox" id="w-auth-create-permit" value="Auth_Create_Permit" onclick="event.stopPropagation();">
+      <label style="color:var(--dark); font-weight:700;">Authorized to Create Permits</label>
+    </label>
+</div>
           <div id="auth-add-options" style="display:none; background:var(--g4); padding:16px; border-radius:10px; margin-bottom:16px; border:1px solid var(--border);">
              <div style="font-size:13px; font-weight:700; color:var(--g2); margin-bottom:12px; text-transform:uppercase;">Select Permissions</div>
              <div class="grid-2">
@@ -841,7 +860,14 @@
             </div>
             <div class="form-group light">
               <label class="form-label">Date of Birth</label>
-              <input type="date" id="w-dob" class="form-input">
+              <input
+  type="text"
+  id="w-dob"
+  class="form-input"
+  placeholder="dd/mm/yy, dd/mm/yyyy, dd.mmm.yy"
+  maxlength="11"
+  autocomplete="off"
+/>
             </div>
           </div>
           <div class="form-group light">
@@ -1291,6 +1317,77 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="edit-user-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Edit User & Role</div>
+      <button class="modal-close" onclick="closeModal('edit-user-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="eu-id">
+      <div class="form-group light">
+        <label class="form-label">Full Name *</label>
+        <input type="text" id="eu-name" class="form-input">
+      </div>
+      <div class="grid-2">
+        <div class="form-group light">
+  <label class="form-label">System Role *</label>
+  <select id="eu-role" class="form-select" onchange="toggleOtherRole()">
+    <option value="">Select Role</option>
+    <option value="EHS Lead">EHS Lead</option>
+    <option value="Safety Officer">Safety Officer</option>
+    <option value="Area Incharge">Area Incharge</option>
+    <option value="Area HOD">Area HOD</option>
+    <option value="Plant Head">Plant Head</option>
+    <option value="Contractor Supervisor">Contractor Supervisor</option>
+    <option value="Maintenance Lead">Maintenance Lead</option>
+    <option value="Other">Other...</option>
+  </select>
+  <input type="text" id="eu-role-other" class="form-input" style="display:none; margin-top:8px;" placeholder="Please specify custom role...">
+</div>
+        <div class="form-group light">
+          <label class="form-label">Account Status</label>
+          <select id="eu-status" class="form-select">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive (Revoke Login)</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group light"><label class="form-label">Email</label><input type="email" id="eu-email" class="form-input"></div>
+        <div class="form-group light"><label class="form-label">Phone</label><input type="tel" id="eu-phone" class="form-input"></div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div style="font-size:14px; font-weight:700; color:var(--g2); margin-bottom:12px;">System Authorities</div>
+      <div class="check-grid" style="margin-bottom: 16px;">
+         <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-auth-create" value="Auth_Create_Permit"> <span>Create Permits</span></label>
+         <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-auth-add-all" value="Auth_Add_All"> <span>Induct All</span></label>
+         <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-auth-add-vis" value="Auth_Add_Visitor"> <span>Induct Visitors</span></label>
+         <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-auth-add-con" value="Auth_Add_Contractor"> <span>Induct Contractors</span></label>
+         <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-auth-new-co" value="Auth_Add_New_Company"> <span>Add New Company</span></label>
+         <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-auth-sup" value="Supervisor"> <span>Supervisor</span></label>
+      </div>
+      
+      <div style="font-size:14px; font-weight:700; color:var(--g2); margin-bottom:12px;">Training Authorities</div>
+      <div class="check-grid" style="margin-bottom: 16px;">
+        <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-tr-general" value="General"> <span>General</span></label>
+        <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-tr-hot" value="Hot"> <span>Hot Work</span></label>
+        <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-tr-height" value="Height"> <span>Height Work</span></label>
+        <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-tr-confined" value="Confined Space"> <span>Confined Space</span></label>
+        <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-tr-excavation" value="Excavation"> <span>Excavation</span></label>
+        <label class="check-item" onclick="this.classList.toggle('selected')"><input type="checkbox" id="eu-tr-lifting" value="Heavy Lifting"> <span>Heavy Lifting</span></label>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('edit-user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditUser()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="modal-overlay" id="permit-closure-modal">
   <div class="modal">
@@ -1666,49 +1763,99 @@ function applyRoleBasedUI(role) {
 
   let canInduct = perms.canInduct;
   let canAddContractor = perms.canAdmin;
+  let canCreatePermit = perms.canCreatePermit;
+  let canViewWorkers = perms.canViewWorkers; 
 
-  // OVERRIDE UI BASED ON WORKER AUTHORIZATIONS
-  if(SESSION && SESSION.user && APP_DATA.workers) {
-     const myProfile = APP_DATA.workers.find(w => w.Worker_Unique_ID === SESSION.user.User_ID || w.Worker_Name === SESSION.user.Full_Name);
-     if(myProfile && myProfile.Authorizations) {
-        if(myProfile.Authorizations.includes('Auth_Add_All') || 
-           myProfile.Authorizations.includes('Auth_Add_Visitor') || 
-           myProfile.Authorizations.includes('Auth_Add_Contractor')) {
+  if (!APP_DATA || !APP_DATA.workers) {
+     canInduct = false; canAddContractor = false; canCreatePermit = false; canViewWorkers = false; 
+  }
+
+  let myProfile = null;
+
+  if (SESSION && SESSION.user && APP_DATA && APP_DATA.workers) {
+     myProfile = APP_DATA.workers.find(w => w.Worker_Unique_ID === SESSION.user.User_ID || w.Worker_Name === SESSION.user.Full_Name);
+     
+     if (myProfile && myProfile.Authorizations) {
+        if (myProfile.Authorizations.includes('Auth_Add_All') || 
+            myProfile.Authorizations.includes('Auth_Add_Visitor') || 
+            myProfile.Authorizations.includes('Auth_Add_Contractor')) {
            canInduct = true;
+           canViewWorkers = true; 
         }
-        if(myProfile.Authorizations.includes('Auth_Add_New_Company')) {
-           canAddContractor = true;
+        if (myProfile.Authorizations.includes('Auth_Add_New_Company')) canAddContractor = true;
+        if (myProfile.Authorizations.includes('Auth_Create_Permit')) canCreatePermit = true;
+        
+        const empTypeSelect = document.getElementById('w-emp-type');
+        if (empTypeSelect) {
+            if (isVisitorOnlyUser()) {
+                empTypeSelect.value = 'Visitor';
+                empTypeSelect.style.pointerEvents = 'none'; 
+                empTypeSelect.style.backgroundColor = '#f0f0f0'; 
+                onEmpTypeChange(); 
+            } else {
+                empTypeSelect.style.pointerEvents = 'auto';
+                empTypeSelect.style.backgroundColor = '';
+            }
         }
      }
   }
 
-  const navInduction    = document.querySelector('[onclick*="induction"]');
-  const navWorkers      = document.querySelector('[onclick*="workers"]');
-  const navCreatePermit = document.getElementById('nav-create-permit');
-  const navApprovals    = document.getElementById('nav-my-approvals');
-  const navAdmin        = document.getElementById('admin-nav');
+  // Use shared helper for all visitor-only checks below
+  const isVisitorOnly = isVisitorOnlyUser();
+
+  // --- DYNAMIC TEXT: Worker vs Visitor Directory ---
+  const dirSidebarLink = document.querySelector('.nav-item[onclick*="workers"] span:nth-child(2)');
+  const dirTileTitle = document.querySelector('.tile[onclick*="workers"] .tile-title');
+  const dirTileSub = document.querySelector('.tile[onclick*="workers"] .tile-sub');
+  const dirPageTitle = document.querySelector('#page-workers .section-title');
+  const dirPageSub = document.querySelector('#page-workers .section-sub');
+
+  if (isVisitorOnly) {
+      if (dirSidebarLink) dirSidebarLink.textContent = 'Visitor Directory';
+      if (dirTileTitle) dirTileTitle.textContent = 'Visitor Directory';
+      if (dirTileSub) dirTileSub.textContent = 'View inside visitors';
+      if (dirPageTitle) dirPageTitle.textContent = 'Visitor Directory';
+      if (dirPageSub) dirPageSub.textContent = 'Track and checkout visitors';
+  } else {
+      if (dirSidebarLink) dirSidebarLink.textContent = 'Worker Directory';
+      if (dirTileTitle) dirTileTitle.textContent = 'Worker Directory';
+      if (dirTileSub) dirTileSub.textContent = 'View all profiles';
+      if (dirPageTitle) dirPageTitle.textContent = 'Worker Directory';
+      if (dirPageSub) dirPageSub.textContent = 'All inducted workers & visitors';
+  }
+  // ------------------------------------------------
+
+  document.querySelectorAll('[onclick*="induction"]').forEach(el => el.style.display = canInduct ? '' : 'none');
+  document.querySelectorAll('[onclick*="create-permit"]').forEach(el => el.style.display = canCreatePermit ? '' : 'none');
+  
+  const navWorkers = document.querySelector('[onclick*="workers"]');
+  const navApprovals = document.getElementById('nav-my-approvals');
+  const navAdmin = document.getElementById('admin-nav');
   const dashboardWorkersSec = document.getElementById('dashboard-workers-section');
-  const addConBtn       = document.querySelector('#page-contractors .btn-primary');
+  const addConBtn = document.querySelector('#page-contractors .btn-primary');
 
-  if (navInduction)    navInduction.style.display     = canInduct              ? '' : 'none';
-  if (navWorkers)      navWorkers.style.display       = perms.canViewWorkers   ? '' : 'none';
-  if (navCreatePermit) navCreatePermit.style.display  = perms.canCreatePermit  ? '' : 'none';
-  if (navApprovals)    navApprovals.style.display     = perms.canApprove       ? '' : 'none';
-  if (navAdmin)        navAdmin.style.display         = perms.canAdmin         ? 'block' : 'none';
-  if (dashboardWorkersSec) dashboardWorkersSec.style.display = perms.canViewWorkers ? 'block' : 'none';
-  if (addConBtn)       addConBtn.style.display        = canAddContractor       ? '' : 'none';
+  document.querySelectorAll('.tile[onclick*="approvals"]').forEach(el => el.style.display = perms.canApprove ? '' : 'none');
+  document.querySelectorAll('.tile[onclick*="workers"]').forEach(el => el.style.display = canViewWorkers ? '' : 'none');
+  
+  if (navWorkers) navWorkers.style.display = canViewWorkers ? '' : 'none';
+  if (dashboardWorkersSec) dashboardWorkersSec.style.display = canViewWorkers ? 'block' : 'none';
+  if (navApprovals) navApprovals.style.display = perms.canApprove ? '' : 'none';
+  if (navAdmin) navAdmin.style.display = perms.canAdmin ? 'block' : 'none';
+  if (addConBtn) addConBtn.style.display = canAddContractor ? '' : 'none';
 
-  // Grant System Access + Authorized to add — only HOD, Plant Head, EHS Lead
   const canGrantAccess = ['EHS Lead', 'Area HOD', 'Plant Head'].includes(role);
   const grantAccessWrapper = document.getElementById('grant-access-wrapper');
-  const authAddWrapper     = document.getElementById('auth-add-wrapper');
-  const authAddOptions     = document.getElementById('auth-add-options');
+  const authAddWrapper = document.getElementById('auth-add-wrapper');
+  const authAddOptions = document.getElementById('auth-add-options');
+  const authCreatePermit = document.getElementById('auth-create-permit-wrapper');
+
   if (grantAccessWrapper) grantAccessWrapper.style.display = canGrantAccess ? '' : 'none';
-  if (authAddWrapper)     authAddWrapper.style.display     = canGrantAccess ? '' : 'none';
+  if (authAddWrapper) authAddWrapper.style.display = canGrantAccess ? '' : 'none';
+  if (authCreatePermit) authCreatePermit.style.display = canGrantAccess ? '' : 'none';
+  
   if (!canGrantAccess) {
-    // Hide dependent panels too so they can't bleed through
     const sysGroup = document.getElementById('system-access-group');
-    if (sysGroup)     sysGroup.style.display     = 'none';
+    if (sysGroup) sysGroup.style.display = 'none';
     if (authAddOptions) authAddOptions.style.display = 'none';
   }
 
@@ -1756,19 +1903,67 @@ function showPage(pageId, navEl) {
 
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
+// ─── SHARED HELPER: Is the current user restricted to Visitor Directory only? ───
+function isVisitorOnlyUser() {
+  if (!SESSION || !SESSION.user || !APP_DATA || !APP_DATA.workers) return false;
+  const role = SESSION.user.Role;
+  if (['Plant Head', 'Area HOD', 'EHS Lead'].includes(role)) return false;
+  const myProfile = APP_DATA.workers.find(w =>
+    w.Worker_Unique_ID === SESSION.user.User_ID || w.Worker_Name === SESSION.user.Full_Name
+  );
+  if (!myProfile || !myProfile.Authorizations) return false;
+  const auths = myProfile.Authorizations;
+  return !auths.includes('Auth_Add_All') && auths.includes('Auth_Add_Visitor');
+}
+
 function loadDashboardData() {
-  document.getElementById('stat-workers').textContent = APP_DATA.workers.length;
-  // BUG FIX: Active permits now correctly excludes Cancelled, Closed, Job Completed, Rejected
+  const visitorOnly = isVisitorOnlyUser();
+
+  // Stat: Total Workers vs Active Visitors count depending on role
+  const allVisitors = APP_DATA.workers.filter(w =>
+    w.Contractor_Name === 'Visitor' || (w.Designation && w.Designation.includes('[Visitor]'))
+  );
+  if (visitorOnly) {
+    document.getElementById('stat-workers').textContent = allVisitors.filter(w => w.Status === 'Active').length;
+    const statLabel = document.querySelector('#page-dashboard .stat-card:first-child .stat-label');
+    if (statLabel) statLabel.textContent = 'Active Visitors';
+    const statChange = document.querySelector('#page-dashboard .stat-card:first-child .stat-change');
+    if (statChange) statChange.textContent = '↑ Inside Plant';
+  } else {
+    document.getElementById('stat-workers').textContent = APP_DATA.workers.length;
+  }
+  
+  // --- Active Visitors Inside ---
+  const activeVisitors = APP_DATA.workers.filter(w =>
+    (w.Contractor_Name === 'Visitor' || (w.Designation && w.Designation.includes('[Visitor]'))) && w.Status === 'Active'
+  );
+  if (document.getElementById('stat-visitors')) document.getElementById('stat-visitors').textContent = activeVisitors.length;
+  // Hide visitor stat card for visitor-only users (already shown in Total count above)
+  const visitorStatCard = document.getElementById('stat-visitors')?.closest('.stat-card');
+  if (visitorStatCard) visitorStatCard.style.display = visitorOnly ? 'none' : '';
+
+  // Active permits logic
   document.getElementById('stat-permits').textContent = APP_DATA.permits.filter(p => !['Closed', 'Job Completed', 'Cancelled', 'Rejected', 'Cancellation Requested'].includes(p.Current_Status)).length;
   document.getElementById('stat-pending').textContent = APP_DATA.permits.filter(p => (p.Current_Status||'').includes('Pending')).length;
-  document.getElementById('stat-contractors').textContent = APP_DATA.contractors.length || '0';
-  renderDashboardWorkers(APP_DATA.workers.slice(-4).reverse());
+
+  // Recent workers list — restrict to visitors if needed
+  const recentWorkers = visitorOnly
+    ? allVisitors.slice(-4).reverse()
+    : APP_DATA.workers.slice(-4).reverse();
+
+  renderDashboardWorkers(recentWorkers);
+
+  // Dashboard workers section heading update
+  const dashSecTitle = document.querySelector('#dashboard-workers-section .card-title');
+  if (dashSecTitle) dashSecTitle.textContent = visitorOnly ? 'Recent Visitors' : 'Recent Workers';
+
   renderDashboardPermits(APP_DATA.permits.slice(-4).reverse());
 }
 
 function renderDashboardWorkers(workers) {
   const el = document.getElementById('dashboard-workers-list');
-  if (!workers.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👷</div><p>No workers inducted yet</p></div>'; return; }
+  const label = isVisitorOnlyUser() ? 'visitors' : 'workers';
+  if (!workers.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">👷</div><p>No ${label} inducted yet</p></div>`; return; }
   el.innerHTML = workers.map(w => `<div class="worker-card" onclick="viewWorker('${w.Worker_Unique_ID}')"><div class="worker-avatar">👷</div><div><div class="worker-id">${w.Worker_Unique_ID || '—'}</div><div class="worker-name">${w.Worker_Name || '—'}</div><div class="worker-meta">${w.Contractor_Name || '—'} · ${w.Status || 'Active'}</div></div></div>`).join('');
 }
 
@@ -1796,19 +1991,9 @@ function getBadge(status) {
   if (!status) return '<span class="badge badge-gray">Unknown</span>';
   if (status === 'Approved') return `<span class="badge badge-green">${status}</span>`;
   if (status === 'Rejected') return `<span class="badge badge-red">${status}</span>`;
+  if (status === 'Checked Out') return `<span class="badge badge-gray" style="background:#EEEEEE;">Checked Out</span>`;
   if (status?.includes('Pending')) return `<span class="badge badge-orange">${status}</span>`;
   return `<span class="badge badge-blue">${status}</span>`;
-}
-
-// ============================================================
-// WORKERS
-// ============================================================
-async function loadWorkers() {
-  const grid = document.getElementById('workers-grid');
-  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="spinner dark"></div></div>';
-  const res = await api('getWorkers', {});
-  if (res.success && res.workers) APP_DATA.workers = res.workers;
-  renderWorkers(APP_DATA.workers);
 }
 
 function renderWorkers(workers) {
@@ -1835,17 +2020,79 @@ function renderWorkers(workers) {
     </div>
   `).join('');
 }
+// Quick helper for the date picker visibility
+function toggleDatePicker() {
+  const df = document.getElementById('worker-date-filter').value;
+  document.getElementById('worker-specific-date').style.display = (df === 'Selected') ? 'block' : 'none';
+}
+
+async function loadWorkers() {
+  const grid = document.getElementById('workers-grid');
+  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="spinner dark"></div></div>';
+  
+  // 1. Fetch fresh data
+  const res = await api('getWorkers', {});
+  if (res.success && res.workers) APP_DATA.workers = res.workers;
+
+  // 2. Route directly to filterWorkers which now handles security and rendering!
+  filterWorkers();
+}
 
 function filterWorkers() {
   const q = document.getElementById('worker-search').value.toLowerCase();
   const status = document.getElementById('worker-status-filter').value;
-  const filtered = APP_DATA.workers.filter(w => {
+  const dateFilter = document.getElementById('worker-date-filter').value;
+  const specificDate = document.getElementById('worker-specific-date').value;
+
+  // 1. Start with all workers
+  let baseWorkers = APP_DATA.workers;
+
+  // 2. SECURITY FILTER — restrict to Visitor records if user only has Auth_Add_Visitor
+  if (isVisitorOnlyUser()) {
+    baseWorkers = baseWorkers.filter(w =>
+      (w.Contractor_Name === 'Visitor') ||
+      (w.Designation && w.Designation.includes('[Visitor]'))
+    );
+  }
+
+  // 3. Setup Date Boundaries
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - (24 * 60 * 60 * 1000);
+  
+  let selectedStart = 0, selectedEnd = 0;
+  if (dateFilter === 'Selected' && specificDate) {
+     const sd = new Date(specificDate);
+     selectedStart = new Date(sd.getFullYear(), sd.getMonth(), sd.getDate()).getTime();
+     selectedEnd = selectedStart + (24 * 60 * 60 * 1000);
+  }
+
+  // 4. Apply User Filters (Search, Status, Date)
+  const filtered = baseWorkers.filter(w => {
+    // Search match
     const matchQ = !q || (w.Worker_Name || '').toLowerCase().includes(q) ||
       (w.Worker_Unique_ID || '').toLowerCase().includes(q) ||
       (w.Contractor_Name || '').toLowerCase().includes(q);
-    const matchS = !status || w.Status === status;
-    return matchQ && matchS;
+    
+    // Status match
+    const matchS = !status || (status === 'Active' ? w.Status === 'Active' : w.Status !== 'Active');
+    
+    // Date match
+    let matchD = true;
+    if (dateFilter && w.Induction_Date) {
+       const wDate = new Date(w.Induction_Date).getTime();
+       if (dateFilter === 'Today') {
+           matchD = wDate >= todayStart;
+       } else if (dateFilter === 'Yesterday') {
+           matchD = wDate >= yesterdayStart && wDate < todayStart;
+       } else if (dateFilter === 'Selected' && specificDate) {
+           matchD = wDate >= selectedStart && wDate < selectedEnd;
+       }
+    }
+
+    return matchQ && matchS && matchD;
   });
+  
   renderWorkers(filtered);
 }
 
@@ -2084,6 +2331,14 @@ function printWorkerCard(id) {
 function viewWorker(id) {
   const w = APP_DATA.workers.find(x => x.Worker_Unique_ID === id);
   if (!w) return;
+  
+  // --- NEW: Conditionally show Checkout Button for Active Visitors ---
+  let checkoutBtn = '';
+  if ((w.Contractor_Name === 'Visitor' || (w.Designation && w.Designation.includes('[Visitor]'))) && w.Status === 'Active') {
+    checkoutBtn = `<button class="btn btn-danger btn-sm" onclick="checkoutVisitor('${w.Worker_Unique_ID}')">🚪 Checkout Visitor</button>`;
+  }
+  // ------------------------------------------------------------------
+
   const body = document.getElementById('worker-modal-body');
   body.innerHTML = `
     <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
@@ -2094,7 +2349,7 @@ function viewWorker(id) {
       </div>
       <div style="flex:1;">
         <div style="font-size:22px;font-weight:700;margin-bottom:4px;">${w.Worker_Name}</div>
-        <div style="color:var(--gray);margin-bottom:16px;">${w.Designation || '—'} &bull; ${w.Contractor_Name || '—'}</div>
+        <div style="color:var(--gray);margin-bottom:16px;">${w.Designation || '—'} • ${w.Contractor_Name || '—'}</div>
         <div class="grid-2" style="gap:12px;font-size:14px;">
           <div><span style="color:var(--gray)">Blood Group:</span> <strong>${w.Blood_Group || '—'}</strong></div>
           <div><span style="color:var(--gray)">Mobile:</span> <strong>${w.Mobile_Number || '—'}</strong></div>
@@ -2108,14 +2363,38 @@ function viewWorker(id) {
           </div>
         </div>
         
-        <div style="margin-top:24px; border-top:1px solid var(--border); padding-top:16px;">
+        <div style="margin-top:24px; border-top:1px solid var(--border); padding-top:16px; display:flex; gap:12px;">
           <button class="btn btn-outline btn-sm" onclick="printWorkerCard('${w.Worker_Unique_ID}')">🖨️ Print ID Card</button>
+          ${checkoutBtn}
         </div>
 
       </div>
     </div>
   `;
   document.getElementById('worker-detail-modal').classList.add('active');
+}
+async function checkoutVisitor(id) {
+  if(!confirm('Mark this visitor as Checked Out / Left the plant?')) return;
+  
+  closeModal('worker-detail-modal');
+  toast('Checking out visitor...', 'info');
+
+  // Calls the backend function we added to Code.gs earlier!
+  const res = await api('checkoutVisitor', { id });
+  
+  if (res.success) {
+    toast('Visitor successfully checked out.', 'success');
+    
+    // Update local data immediately
+    const w = APP_DATA.workers.find(x => x.Worker_Unique_ID === id);
+    if (w) w.Status = 'Checked Out';
+    
+    // Refresh UI to update the Dashboard counter and the Directory list
+    loadWorkers();
+    loadDashboardData();
+  } else {
+    toast(res.message, 'error');
+  }
 }
 
 // ============================================================
@@ -2238,6 +2517,10 @@ async function submitWorker() {
   // Compile Authorizations
   const authsArray = Array.from(document.querySelectorAll('#page-induction input[type=checkbox]:checked')).map(cb => cb.value).filter(v => v && v !== 'on');
   if(isSup) authsArray.push('Supervisor');
+// NEW: Save the Create Permit authorization
+  if(document.getElementById('w-auth-create-permit') && document.getElementById('w-auth-create-permit').checked) {
+     authsArray.push('Auth_Create_Permit');
+  }
   if(document.getElementById('w-auth-add-toggle').checked) {
      if(document.getElementById('auth-all').checked) authsArray.push('Auth_Add_All');
      if(document.getElementById('auth-vis').checked) authsArray.push('Auth_Add_Visitor');
@@ -2280,6 +2563,9 @@ function clearInductionForm() {
   document.getElementById('w-is-supervisor').checked = false;
   document.getElementById('w-grant-access').checked = false;
   document.getElementById('w-auth-add-toggle').checked = false;
+if (document.getElementById('w-auth-create-permit')) {
+    document.getElementById('w-auth-create-permit').checked = false;
+  }
   document.getElementById('auth-all').checked = false;
   document.getElementById('auth-vis').checked = false;
   document.getElementById('auth-con').checked = false;
@@ -2348,7 +2634,71 @@ function handleSupervisorSelect(sel) {
     sel.options[sel.selectedIndex].text = `${SESSION.user.Full_Name} (Me)`;
   }
 }
+function normalizeDOB(value) {
+  if (!value) return "";
 
+  value = value.trim();
+
+  // Accept: dd/mm/yy, dd/mm/yyyy, dd/mmm/yy, dd.mm.yy, dd.mmm.yy
+  const match = value.match(/^(\d{1,2})[\/.](\d{1,3})(?:[\/.](\d{2}|\d{4}))$/i);
+  if (!match) return "";
+
+  let day = match[1].padStart(2, "0");
+  let monthPart = match[2].toLowerCase();
+  let year = match[3];
+
+  const months = {
+    jan: "Jan", feb: "Feb", mar: "Mar", apr: "Apr", may: "May", jun: "Jun",
+    jul: "Jul", aug: "Aug", sep: "Sep", oct: "Oct", nov: "Nov", dec: "Dec"
+  };
+
+  let month = "";
+
+  // Numeric month
+  if (/^\d{1,2}$/.test(monthPart)) {
+    const m = parseInt(monthPart, 10);
+    if (m < 1 || m > 12) return "";
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    month = monthNames[m - 1];
+  } else {
+    // Text month like jan / JAN / Jan
+    month = months[monthPart.slice(0, 3)];
+    if (!month) return "";
+  }
+
+  // Convert year to 2 digits
+  if (year.length === 4) {
+    year = year.slice(2);
+  } else {
+    year = year.padStart(2, "0");
+  }
+
+  return `${day}.${month}.${year}`;
+}
+
+function applyDOBFormat() {
+  const dobInput = document.getElementById("w-dob");
+  if (!dobInput) return;
+
+  dobInput.addEventListener("blur", function () {
+    const formatted = normalizeDOB(this.value);
+    if (this.value.trim() && !formatted) {
+      toast("Enter DOB as dd/mm/yy, dd/mm/yyyy, dd.mmm.yy, or dd/mmm/yy", "error");
+      this.focus();
+      return;
+    }
+    if (formatted) this.value = formatted;
+  });
+
+  // Optional: format when user presses Enter
+  dobInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      const formatted = normalizeDOB(this.value);
+      if (formatted) this.value = formatted;
+    }
+  });
+}
 function toggleSystemAccessFields() {
   const isGranted = document.getElementById('w-grant-access').checked;
   const sysGroup = document.getElementById('system-access-group');
@@ -2358,6 +2708,16 @@ function toggleSystemAccessFields() {
     document.getElementById('w-sys-role').value = '';
     document.getElementById('w-sys-email').value = '';
     document.getElementById('w-sys-pwd').value = '';
+  }
+}
+function toggleOtherRole() {
+  const roleSelect = document.getElementById('eu-role');
+  const otherInput = document.getElementById('eu-role-other');
+  if (roleSelect.value === 'Other') {
+    otherInput.style.display = 'block';
+    otherInput.focus();
+  } else {
+    otherInput.style.display = 'none';
   }
 }
 
@@ -3086,7 +3446,7 @@ async function loadAdminUsers() {
       <td><span class="badge badge-green">${u.Role || '—'}</span></td>
       <td>${u.Email_Address || '—'}</td>
       <td><span class="badge badge-green">${u.Status || 'Active'}</span></td>
-      <td><button class="btn btn-ghost btn-sm" disabled>Edit</button></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openEditUserModal('${u.User_ID}')">Edit</button></td>
     </tr>
   `).join('');
 }
@@ -3117,6 +3477,109 @@ async function submitAddUser() {
   }
 }
 
+function openEditUserModal(id) {
+  const user = APP_DATA.users.find(u => u.User_ID.toString() === id.toString());
+  if(!user) return;
+  
+  // Find their worker profile to get their specific authorizations
+  const worker = APP_DATA.workers.find(w => w.Worker_Unique_ID.toString() === id.toString());
+  const auths = worker ? (worker.Authorizations || '') : '';
+  
+  document.getElementById('eu-id').value = user.User_ID;
+  document.getElementById('eu-name').value = user.Full_Name;
+  // --- Replace document.getElementById('eu-role').value = user.Role; with this: ---
+  const standardRoles = ['EHS Lead', 'Safety Officer', 'Area Incharge', 'Area HOD', 'Plant Head', 'Contractor Supervisor', 'Maintenance Lead'];
+  const roleSelect = document.getElementById('eu-role');
+  const otherInput = document.getElementById('eu-role-other');
+  
+  if (standardRoles.includes(user.Role)) {
+      roleSelect.value = user.Role;
+      otherInput.style.display = 'none';
+      otherInput.value = '';
+  } else if (user.Role) {
+      // If they have a custom role not in the standard list, select "Other" and fill the text box
+      roleSelect.value = 'Other';
+      otherInput.style.display = 'block';
+      otherInput.value = user.Role;
+  } else {
+      roleSelect.value = '';
+      otherInput.style.display = 'none';
+      otherInput.value = '';
+  }
+  // --------------------------------------------------------------------------------
+  document.getElementById('eu-email').value = user.Email_Address || '';
+  document.getElementById('eu-phone').value = user.Phone || '';
+  document.getElementById('eu-status').value = user.Status || 'Active';
+  
+  // Set system authorization checkboxes
+  document.getElementById('eu-auth-create').checked = auths.includes('Auth_Create_Permit');
+  document.getElementById('eu-auth-add-all').checked = auths.includes('Auth_Add_All');
+  document.getElementById('eu-auth-add-vis').checked = auths.includes('Auth_Add_Visitor');
+  document.getElementById('eu-auth-add-con').checked = auths.includes('Auth_Add_Contractor');
+  document.getElementById('eu-auth-new-co').checked = auths.includes('Auth_Add_New_Company');
+  document.getElementById('eu-auth-sup').checked = auths.includes('Supervisor');
+  
+  // Set training checkboxes
+  document.getElementById('eu-tr-general').checked = auths.includes('General');
+  document.getElementById('eu-tr-hot').checked = auths.includes('Hot');
+  document.getElementById('eu-tr-height').checked = auths.includes('Height');
+  document.getElementById('eu-tr-confined').checked = auths.includes('Confined Space');
+  document.getElementById('eu-tr-excavation').checked = auths.includes('Excavation');
+  document.getElementById('eu-tr-lifting').checked = auths.includes('Heavy Lifting');
+  
+  // Apply visual styling to checked boxes
+  document.querySelectorAll('#edit-user-modal .check-item').forEach(el => {
+     const cb = el.querySelector('input');
+     if(cb && cb.checked) el.classList.add('selected');
+     else el.classList.remove('selected');
+  });
+  
+  document.getElementById('edit-user-modal').classList.add('active');
+}
+
+async function submitEditUser() {
+  const id = document.getElementById('eu-id').value;
+  const name = document.getElementById('eu-name').value.trim();
+  // --- Replace const role = document.getElementById('eu-role').value; with this: ---
+  let role = document.getElementById('eu-role').value;
+  if (role === 'Other') {
+      role = document.getElementById('eu-role-other').value.trim();
+  }
+  // --------------------------------------------------------------------------------
+  const email = document.getElementById('eu-email').value.trim();
+  const phone = document.getElementById('eu-phone').value.trim();
+  const status = document.getElementById('eu-status').value;
+
+  if(!name || !role) return toast('Name and Role are required.', 'error');
+
+  // Gather all checked authorities into an array
+  const authsArray = [];
+  document.querySelectorAll('#edit-user-modal input[type="checkbox"]:checked').forEach(cb => {
+     authsArray.push(cb.value);
+  });
+  const authsString = authsArray.join(',');
+
+  const btn = document.querySelector('#edit-user-modal .btn-primary');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  // Pass everything, including the new authsString, to the backend
+  const res = await api('updateUser', { userData: { id, name, role, email, phone, status, authorizations: authsString } });
+
+  btn.disabled = false; btn.textContent = 'Save Changes';
+
+  if(res.success) {
+    toast('User updated successfully!', 'success');
+    closeModal('edit-user-modal');
+    
+    // Update local data immediately so they don't have to refresh
+    const wIdx = APP_DATA.workers.findIndex(w => w.Worker_Unique_ID.toString() === id.toString());
+    if(wIdx > -1) APP_DATA.workers[wIdx].Authorizations = authsString;
+    
+    loadAdminUsers();
+  } else {
+    toast(res.message, 'error');
+  }
+}
 async function loadContractors() {
   const tbody = document.getElementById('contractors-table');
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;"><div class="spinner dark" style="margin:auto;"></div></td></tr>';
